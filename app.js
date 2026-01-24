@@ -116,63 +116,66 @@ function renderRestaurants() {
     const container = document.getElementById('restaurant-list');
     container.innerHTML = '';
 
-    // Group by day
-    const days = ['Feb 10', 'Feb 11', 'Feb 12', 'Either'];
-    
-    days.forEach(day => {
-        const dayRestaurants = restaurantData.filter(r => r.bestDay === day);
-        if (dayRestaurants.length === 0) return;
+    console.log('Rendering restaurants. Total:', restaurantData.length);
 
-        const daySection = document.createElement('div');
-        daySection.className = 'day-section';
-        daySection.innerHTML = `<h4>${day}</h4>`;
+    if (restaurantData.length === 0) {
+        container.innerHTML = '<p style="padding: 20px; text-align: center;">No restaurants loaded</p>';
+        return;
+    }
 
-        dayRestaurants.forEach((restaurant, index) => {
-            const card = document.createElement('div');
-            card.className = 'item-card';
-            card.setAttribute('data-name', restaurant.name);
-            card.setAttribute('data-day', restaurant.bestDay.toLowerCase().replace(/\s/g, ''));
-            card.setAttribute('data-index', index);
-            if (selectedRestaurants.has(restaurant.name)) {
+    restaurantData.forEach((restaurant, index) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.setAttribute('data-name', restaurant.name);
+        card.setAttribute('data-index', index);
+        if (selectedRestaurants.has(restaurant.name)) {
+            card.classList.add('selected');
+        }
+
+        const selectedDay = localStorage.getItem(`rest-${restaurant.name}`) || restaurant.bestDay;
+
+        card.innerHTML = `
+            <div class="item-header">
+                <input type="checkbox" class="select-checkbox" data-name="${restaurant.name}" ${selectedRestaurants.has(restaurant.name) ? 'checked' : ''}>
+                <h3>${restaurant.name}</h3>
+                <button class="delete-btn" onclick="deleteRestaurant(${index})">×</button>
+            </div>
+            <div class="date-selector">
+                <label>Date:</label>
+                <select class="date-select" onchange="updateRestaurantDate('${restaurant.name}', this.value)">
+                    <option value="Feb 10" ${selectedDay === 'Feb 10' ? 'selected' : ''}>Feb 10 (Arrival)</option>
+                    <option value="Feb 11" ${selectedDay === 'Feb 11' ? 'selected' : ''}>Feb 11 (Main)</option>
+                    <option value="Feb 12" ${selectedDay === 'Feb 12' ? 'selected' : ''}>Feb 12 (Flexible)</option>
+                    <option value="Either" ${selectedDay === 'Either' ? 'selected' : ''}>Either</option>
+                </select>
+            </div>
+            <span class="category">${restaurant.category}</span>
+            <div class="details">
+                <span>📍 ${restaurant.area}</span>
+                <span>🚶 ${restaurant.distance || 'N/A'}</span>
+            </div>
+            <div class="description">${restaurant.description}</div>
+            <div class="rating">${restaurant.rating}</div>
+            ${restaurant.link ? `<div class="links">
+                <a href="${restaurant.link}" target="_blank">${restaurant.platform || 'Link'}</a>
+                <a href="#" onclick="focusOnMap(${restaurant.lat}, ${restaurant.lng}); return false;">Show on Map</a>
+            </div>` : ''}
+        `;
+
+        const checkbox = card.querySelector('.select-checkbox');
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                selectedRestaurants.add(restaurant.name);
                 card.classList.add('selected');
+            } else {
+                selectedRestaurants.delete(restaurant.name);
+                card.classList.remove('selected');
             }
-
-            card.innerHTML = `
-                <div class="item-header">
-                    <input type="checkbox" class="select-checkbox" data-name="${restaurant.name}" ${selectedRestaurants.has(restaurant.name) ? 'checked' : ''}>
-                    <h3>${restaurant.name}</h3>
-                    <button class="delete-btn" onclick="deleteRestaurant(${index})">×</button>
-                </div>
-                <span class="category">${restaurant.category}</span>
-                <div class="details">
-                    <span>📍 ${restaurant.area}</span>
-                    <span>🚶 ${restaurant.distance || 'N/A'}</span>
-                </div>
-                <div class="description">${restaurant.description}</div>
-                <div class="rating">${restaurant.rating}</div>
-                ${restaurant.link ? `<div class="links">
-                    <a href="${restaurant.link}" target="_blank">${restaurant.platform || 'Link'}</a>
-                    <a href="#" onclick="focusOnMap(${restaurant.lat}, ${restaurant.lng}); return false;">Show on Map</a>
-                </div>` : ''}
-            `;
-
-            const checkbox = card.querySelector('.select-checkbox');
-            checkbox.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    selectedRestaurants.add(restaurant.name);
-                    card.classList.add('selected');
-                } else {
-                    selectedRestaurants.delete(restaurant.name);
-                    card.classList.remove('selected');
-                }
-                saveSelections();
-                addAllMarkers();
-            });
-
-            daySection.appendChild(card);
+            saveSelections();
+            addAllMarkers();
         });
 
-        container.appendChild(daySection);
+        container.appendChild(card);
     });
 }
 
@@ -188,71 +191,61 @@ function renderActivities() {
         return;
     }
 
-    // Group by day
-    const days = ['Feb 10', 'Feb 11', 'Feb 12', 'Either'];
-    
-    let totalRendered = 0;
-    days.forEach(day => {
-        const dayActivities = activityData.filter(a => a.bestDay === day);
-        console.log(`Day ${day}: ${dayActivities.length} activities`);
-        
-        if (dayActivities.length === 0) return;
+    activityData.forEach((activity, index) => {
+        const card = document.createElement('div');
+        card.className = 'item-card';
+        card.setAttribute('data-name', activity.name);
+        card.setAttribute('data-index', index);
+        if (selectedActivities.has(activity.name)) {
+            card.classList.add('selected');
+        }
 
-        const daySection = document.createElement('div');
-        daySection.className = 'day-section';
-        daySection.innerHTML = `<h4>${day}</h4>`;
+        const selectedDay = localStorage.getItem(`act-${activity.name}`) || activity.bestDay;
 
-        dayActivities.forEach((activity, index) => {
-            totalRendered++;
-            const card = document.createElement('div');
-            card.className = 'item-card';
-            card.setAttribute('data-name', activity.name);
-            card.setAttribute('data-day', activity.bestDay.toLowerCase().replace(/\s/g, ''));
-            card.setAttribute('data-index', index);
-            if (selectedActivities.has(activity.name)) {
+        card.innerHTML = `
+            <div class="item-header">
+                <input type="checkbox" class="select-checkbox" data-name="${activity.name}" ${selectedActivities.has(activity.name) ? 'checked' : ''}>
+                <h3>${activity.name}</h3>
+                <button class="delete-btn" onclick="deleteActivity(${index})">×</button>
+            </div>
+            <div class="date-selector">
+                <label>Date:</label>
+                <select class="date-select" onchange="updateActivityDate('${activity.name}', this.value)">
+                    <option value="Feb 10" ${selectedDay === 'Feb 10' ? 'selected' : ''}>Feb 10 (Arrival)</option>
+                    <option value="Feb 11" ${selectedDay === 'Feb 11' ? 'selected' : ''}>Feb 11 (Main)</option>
+                    <option value="Feb 12" ${selectedDay === 'Feb 12' ? 'selected' : ''}>Feb 12 (Flexible)</option>
+                    <option value="Either" ${selectedDay === 'Either' ? 'selected' : ''}>Either</option>
+                </select>
+            </div>
+            <span class="category">${activity.type}</span>
+            <div class="details">
+                <span>📍 ${activity.area}</span>
+                <span>⏱️ ${activity.duration || 'N/A'}</span>
+                ${activity.bestTime ? `<span>🕐 ${activity.bestTime}</span>` : ''}
+            </div>
+            <div class="description">${activity.description}</div>
+            <div class="rating">${activity.rating}</div>
+            ${activity.link ? `<div class="links">
+                <a href="${activity.link}" target="_blank">Google Maps</a>
+                <a href="#" onclick="focusOnMap(${activity.lat}, ${activity.lng}); return false;">Show on Map</a>
+            </div>` : ''}
+        `;
+
+        const checkbox = card.querySelector('.select-checkbox');
+        checkbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                selectedActivities.add(activity.name);
                 card.classList.add('selected');
+            } else {
+                selectedActivities.delete(activity.name);
+                card.classList.remove('selected');
             }
-
-            card.innerHTML = `
-                <div class="item-header">
-                    <input type="checkbox" class="select-checkbox" data-name="${activity.name}" ${selectedActivities.has(activity.name) ? 'checked' : ''}>
-                    <h3>${activity.name}</h3>
-                    <button class="delete-btn" onclick="deleteActivity(${index})">×</button>
-                </div>
-                <span class="category">${activity.type}</span>
-                <div class="details">
-                    <span>📍 ${activity.area}</span>
-                    <span>⏱️ ${activity.duration || 'N/A'}</span>
-                    ${activity.bestTime ? `<span>🕐 ${activity.bestTime}</span>` : ''}
-                </div>
-                <div class="description">${activity.description}</div>
-                <div class="rating">${activity.rating}</div>
-                ${activity.link ? `<div class="links">
-                    <a href="${activity.link}" target="_blank">Google Maps</a>
-                    <a href="#" onclick="focusOnMap(${activity.lat}, ${activity.lng}); return false;">Show on Map</a>
-                </div>` : ''}
-            `;
-
-            const checkbox = card.querySelector('.select-checkbox');
-            checkbox.addEventListener('change', (e) => {
-                if (e.target.checked) {
-                    selectedActivities.add(activity.name);
-                    card.classList.add('selected');
-                } else {
-                    selectedActivities.delete(activity.name);
-                    card.classList.remove('selected');
-                }
-                saveSelections();
-                addAllMarkers();
-            });
-
-            daySection.appendChild(card);
+            saveSelections();
+            addAllMarkers();
         });
 
-        container.appendChild(daySection);
+        container.appendChild(card);
     });
-    
-    console.log('Total activities rendered:', totalRendered);
 }
 
 // Render route plan
@@ -370,11 +363,12 @@ SELECTED RESTAURANTS (${selected.restaurants.length})
 ======================================\n\n`;
 
     selected.restaurants.forEach((r, i) => {
+        const day = localStorage.getItem(`rest-${r.name}`) || r.bestDay;
         content += `${i + 1}. ${r.name}
    Category: ${r.category}
    Area: ${r.area}
    Distance: ${r.distance}
-   Best Day: ${r.bestDay}
+   Date: ${day}
    Rating: ${r.rating}
    Description: ${r.description}
    Link: ${r.link}\n\n`;
@@ -385,11 +379,12 @@ SELECTED ACTIVITIES (${selected.activities.length})
 ======================================\n\n`;
 
     selected.activities.forEach((a, i) => {
+        const day = localStorage.getItem(`act-${a.name}`) || a.bestDay;
         content += `${i + 1}. ${a.name}
    Type: ${a.type}
    Area: ${a.area}
    Duration: ${a.duration}
-   Best Day: ${a.bestDay}
+   Date: ${day}
    Best Time: ${a.bestTime}
    Rating: ${a.rating}
    Description: ${a.description}
@@ -404,6 +399,16 @@ SELECTED ACTIVITIES (${selected.activities.length})
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+}
+
+// Update restaurant date
+function updateRestaurantDate(name, date) {
+    localStorage.setItem(`rest-${name}`, date);
+}
+
+// Update activity date
+function updateActivityDate(name, date) {
+    localStorage.setItem(`act-${name}`, date);
 }
 
 // Toggle edit mode
