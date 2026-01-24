@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seoul Date Itinerary - Feb 10-12, 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>💕 Seoul Romantic Date Itinerary</h1>
+            <p class="subtitle">Feb 10-12, 2026 • Orakai Insadong Suites</p>
+            <button class="edit-mode-btn" onclick="toggleEditMode()">✏️ Edit Mode</button>
+        </header>
+
+        <nav class="filter-nav">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="feb10">Feb 10 (Arrival)</button>
+            <button class="filter-btn" data-filter="feb11">Feb 11 (Main Date)</button>
+            <button class="filter-btn" data-filter="feb12">Feb 12 (Flexible)</button>
+            <button class="filter-btn" data-filter="restaurants">🍽️ Restaurants</button>
+            <button class="filter-btn" data-filter="activities">🗺️ Activities</button>
+            <button class="share-btn" onclick="shareItinerary()">📤 Share</button>
+            <button class="download-btn" onclick="downloadPlan()">⬇️ Download</button>
+        </nav>
+
+        <div class="main-content">
+            <div class="map-container">
+                <div id="map"></div>
+                <div class="map-legend">
+                    <div class="legend-item">
+                        <span class="marker-icon hotel">🏨</span>
+                        <span>Orakai Hotel</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="marker-icon restaurant">🍽️</span>
+                        <span>Restaurant</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="marker-icon activity">🗺️</span>
+                        <span>Activity</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-panel">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="restaurants">Restaurants</button>
+                    <button class="tab-btn" data-tab="activities">Activities</button>
+                    <button class="tab-btn" data-tab="route">Route Plan</button>
+                </div>
+
+                <div id="restaurants-tab" class="tab-content active">
+                    <div class="tab-header">
+                        <div class="search-box">
+                            <input type="text" id="restaurant-search" placeholder="Search restaurants...">
+                        </div>
+                        <div class="selection-counter">
+                            <span id="restaurant-count">0</span> selected
+                        </div>
+                    </div>
+                    <div id="restaurant-list" class="item-list"></div>
+                </div>
+
+                <div id="activities-tab" class="tab-content">
+                    <div class="tab-header">
+                        <div class="search-box">
+                            <input type="text" id="activity-search" placeholder="Search activities...">
+                        </div>
+                        <div class="selection-counter">
+                            <span id="activity-count">0</span> selected
+                        </div>
+                    </div>
+                    <div id="activity-list" class="item-list"></div>
+                </div>
+
+                <div id="route-tab" class="tab-content">
+                    <div class="route-plan">
+                        <h3>📅 Suggested Daily Routes</h3>
+                        <div id="route-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Item Modal -->
+        <div id="add-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <h2 id="modal-title">Add New Item</h2>
+                <form id="add-form">
+                    <input type="hidden" id="item-type">
+
+                    <label>Name *</label>
+                    <input type="text" id="item-name" required>
+
+                    <label>Category *</label>
+                    <input type="text" id="item-category" required>
+
+                    <label>Area *</label>
+                    <input type="text" id="item-area" required>
+
+                    <label>Best Day *</label>
+                    <select id="item-day" required>
+                        <option value="Feb 10">Feb 10 (Arrival)</option>
+                        <option value="Feb 11">Feb 11 (Main Date)</option>
+                        <option value="Feb 12">Feb 12 (Flexible)</option>
+                        <option value="Either">Either</option>
+                    </select>
+
+                    <label>Description *</label>
+                    <textarea id="item-description" rows="3" required></textarea>
+
+                    <label>Rating</label>
+                    <input type="text" id="item-rating" placeholder="⭐4.5/5">
+
+                    <label>Link</label>
+                    <input type="url" id="item-link" placeholder="https://...">
+
+                    <div class="modal-buttons">
+                        <button type="submit" class="btn-primary">Add Item</button>
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <footer>
+            <p>Created with ❤️ for a romantic Seoul getaway</p>
+            <p class="note">⚠️ Allergy Note: All recommendations exclude raw shellfish</p>
+        </footer>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
