@@ -11,6 +11,8 @@ let selectedCafes = new Set();
 // Initialize map with Leaflet
 function initMap() {
     // Create map centered on Orakai Insadong Suites
+    if (!document.getElementById('map')) return;
+
     map = L.map('map').setView([ORAKAI_LOCATION.lat, ORAKAI_LOCATION.lng], 14);
 
     // Add OpenStreetMap tiles
@@ -37,6 +39,8 @@ function initMap() {
 
 // Add all markers to map
 function addAllMarkers() {
+    if (!map) return;
+
     // Clear existing markers
     markers.forEach(marker => marker.remove());
     markers = [];
@@ -89,7 +93,9 @@ function addAllMarkers() {
 // Show item details
 function showItemDetails(item, type) {
     if (type === 'restaurant') {
-        document.querySelector('[data-tab="restaurants"]').click();
+        const tabBtn = document.querySelector('[data-tab="restaurants"]');
+        if (tabBtn) tabBtn.click();
+
         setTimeout(() => {
             const card = document.querySelector(`#restaurant-list [data-name="${item.name}"]`);
             if (card) {
@@ -99,13 +105,15 @@ function showItemDetails(item, type) {
             }
         }, 100);
     } else {
-        document.querySelector('[data-tab="cafes"]').click();
+        const tabBtn = document.querySelector('[data-tab="cafes"]');
+        if (tabBtn) tabBtn.click();
+
         setTimeout(() => {
             const card = document.querySelector(`#cafe-list [data-name="${item.name}"]`);
             if (card) {
                 card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                card.style.background = '#e6ccb3'; // Specific color for cafes
-                setTimeout(() => { card.style.background = '#fff5f7'; }, 2000); // Back to default
+                card.style.background = '#e6ccb3';
+                setTimeout(() => { card.style.background = '#fff5f7'; }, 2000);
             }
         }, 100);
     }
@@ -114,6 +122,8 @@ function showItemDetails(item, type) {
 // Render restaurants
 function renderRestaurants() {
     const container = document.getElementById('restaurant-list');
+    if (!container) return;
+
     container.innerHTML = '';
 
     console.log('Rendering restaurants. Total:', restaurantData.length);
@@ -183,6 +193,8 @@ function renderRestaurants() {
 // Render cafes
 function renderCafes() {
     const container = document.getElementById('cafe-list');
+    if (!container) return;
+
     container.innerHTML = '';
 
     console.log('Rendering cafes. Total cafes:', cafeData.length);
@@ -252,6 +264,8 @@ function renderCafes() {
 // Render route plan
 function renderRoutePlan() {
     const container = document.getElementById('route-content');
+    if (!container) return;
+
     container.innerHTML = '';
 
     if (!routePlans || Object.keys(routePlans).length === 0) {
@@ -290,6 +304,7 @@ function renderRoutePlan() {
 
 // Focus on map location
 function focusOnMap(lat, lng) {
+    if (!map) return;
     map.setView([lat, lng], 16);
 }
 
@@ -305,23 +320,33 @@ function saveSelections() {
 
 // Update selection counters
 function updateCounters() {
-    document.getElementById('restaurant-count').textContent = selectedRestaurants.size;
-    document.getElementById('cafe-count').textContent = selectedCafes.size;
+    const restCount = document.getElementById('restaurant-count');
+    const cafeCount = document.getElementById('cafe-count');
+
+    if (restCount) restCount.textContent = selectedRestaurants.size;
+    if (cafeCount) cafeCount.textContent = selectedCafes.size;
 }
 
 // Load selections from localStorage
 function loadSelections() {
     const saved = localStorage.getItem('seoulItinerary');
     if (saved) {
-        const selections = JSON.parse(saved);
-        if (selections.restaurants) selectedRestaurants = new Set(selections.restaurants);
-        if (selections.cafes) selectedCafes = new Set(selections.cafes);
+        try {
+            const selections = JSON.parse(saved);
+            if (selections.restaurants) selectedRestaurants = new Set(selections.restaurants);
+            if (selections.cafes) selectedCafes = new Set(selections.cafes);
 
-        // Backwards compatibility if user had "activities" stored
-        if (selections.activities && !selections.cafes) {
-            // Can't really migrate as names changed, just ignore or log
-            console.log('Detected old activities data, ignoring.');
+            // Backwards compatibility
+            if (selections.activities && !selections.cafes) {
+                console.log('Detected old activities data, ignoring.');
+            }
+        } catch (e) {
+            console.error("Error loading selections:", e);
         }
+    } else {
+        // Select all by default if nothing saved
+        restaurantData.forEach(r => selectedRestaurants.add(r.name));
+        cafeData.forEach(c => selectedCafes.add(c.name));
     }
 }
 
@@ -348,7 +373,6 @@ Check it out: ${window.location.href}`;
             text: shareText
         });
     } else {
-        // Fallback: copy to clipboard
         navigator.clipboard.writeText(shareText);
         alert('✓ Itinerary copied to clipboard!\n\n' + shareText.substring(0, 100) + '...');
     }
@@ -397,7 +421,6 @@ SELECTED CAFES (${selected.cafes.length})
    Link: ${a.link}\n\n`;
     });
 
-    // Create and download file
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(content));
     element.setAttribute('download', 'seoul-itinerary-' + new Date().toISOString().slice(0, 10) + '.txt');
@@ -410,11 +433,13 @@ SELECTED CAFES (${selected.cafes.length})
 // Update restaurant date
 function updateRestaurantDate(name, date) {
     localStorage.setItem(`rest-${name}`, date);
+    renderRestaurants(); // Re-render to update data attributes
 }
 
 // Update cafe date
 function updateCafeDate(name, date) {
     localStorage.setItem(`cafe-${name}`, date);
+    renderCafes(); // Re-render to update data attributes
 }
 
 // Toggle edit mode
@@ -428,34 +453,45 @@ function toggleEditMode() {
         btn.classList.add('active');
         btn.textContent = '✓ Edit Mode ON';
         body.classList.add('edit-mode');
-        addBtns.forEach(btn => btn.style.display = 'block');
+        if (addBtns) addBtns.forEach(btn => btn.style.display = 'block');
     } else {
         btn.classList.remove('active');
         btn.textContent = '✏️ Edit Mode';
         body.classList.remove('edit-mode');
-        addBtns.forEach(btn => btn.style.display = 'none');
+        if (addBtns) addBtns.forEach(btn => btn.style.display = 'none');
     }
 }
 
 // Show add restaurant form
 function showAddRestaurantForm() {
-    document.getElementById('modal-title').textContent = 'Add New Restaurant';
-    document.getElementById('item-type').value = 'restaurant';
-    document.getElementById('add-form').reset();
-    document.getElementById('add-modal').classList.add('show');
+    const title = document.getElementById('modal-title');
+    const type = document.getElementById('item-type');
+    const form = document.getElementById('add-form');
+    const modal = document.getElementById('add-modal');
+
+    if (title) title.textContent = 'Add New Restaurant';
+    if (type) type.value = 'restaurant';
+    if (form) form.reset();
+    if (modal) modal.classList.add('show');
 }
 
 // Show add cafe form
 function showAddCafeForm() {
-    document.getElementById('modal-title').textContent = 'Add New Cafe';
-    document.getElementById('item-type').value = 'cafe';
-    document.getElementById('add-form').reset();
-    document.getElementById('add-modal').classList.add('show');
+    const title = document.getElementById('modal-title');
+    const type = document.getElementById('item-type');
+    const form = document.getElementById('add-form');
+    const modal = document.getElementById('add-modal');
+
+    if (title) title.textContent = 'Add New Cafe';
+    if (type) type.value = 'cafe';
+    if (form) form.reset();
+    if (modal) modal.classList.add('show');
 }
 
 // Close modal
 function closeModal() {
-    document.getElementById('add-modal').classList.remove('show');
+    const modal = document.getElementById('add-modal');
+    if (modal) modal.classList.remove('show');
 }
 
 // Delete restaurant
@@ -478,45 +514,6 @@ function deleteCafe(index) {
     }
 }
 
-// Handle form submission
-document.addEventListener('DOMContentLoaded', () => {
-    const form = document.getElementById('add-form');
-    if (form) {
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const type = document.getElementById('item-type').value;
-            const newItem = {
-                name: document.getElementById('item-name').value,
-                category: document.getElementById('item-category').value,
-                area: document.getElementById('item-area').value,
-                bestDay: document.getElementById('item-day').value,
-                description: document.getElementById('item-description').value,
-                rating: document.getElementById('item-rating').value || 'N/A',
-                link: document.getElementById('item-link').value || '',
-                lat: ORAKAI_LOCATION.lat + (Math.random() - 0.5) * 0.01,
-                lng: ORAKAI_LOCATION.lng + (Math.random() - 0.5) * 0.01,
-                distance: 'Calculating...', // Simplified
-                platform: 'User Added'
-            };
-
-            if (type === 'restaurant') {
-                newItem.type = 'restaurant';
-                restaurantData.push(newItem);
-                renderRestaurants();
-            } else {
-                newItem.type = 'cafe';
-                cafeData.push(newItem);
-                renderCafes();
-            }
-
-            addAllMarkers();
-            applyFilter(currentFilter);
-            closeModal();
-        });
-    }
-});
-
 // Filter functionality
 function setupFilters() {
     const filterButtons = document.querySelectorAll('.filter-btn');
@@ -538,44 +535,161 @@ function applyFilter(filter) {
     const allCards = document.querySelectorAll('.item-card');
 
     allCards.forEach(card => {
-        const day = card.getAttribute('data-day'); // Note: data-day attribute isn't explicitly set in render functions above, but logic relies on it?
-        // Wait, I missed setting data-day in render functions. 
-        // Actually, the current code logic for cards doesn't read data-day from DOM attribute, 
-        // it determines visibility inside the render Loop? No, applyFilter loops over DOM cards.
-        // Let's fix this logic. In the original code, applyFilter iterated cards and re-checked logic?
-        // No, the original code had: const day = card.getAttribute('data-day');
-        // BUT I didn't see setAttribute('data-day') in my renderRestaurant/Cafes above.
-        // I should fix that in this rewrite or just use element context.
-
-        // Actually, let's look at how I implemented show/hide.
-        // Ideally, we re-render or just toggle display.
-        // The original code tried to be smart.
-        // Let's keep it simple: Just checking the container is easier.
-
+        const day = card.getAttribute('data-day');
         const isRestaurant = card.closest('#restaurant-list') !== null;
 
-        // To properly filter by date, we need to know the date of the item.
-        // I will trust that I can just re-render to filter? No, standard pattern is CSS toggle.
-        // Let's rely on data attributes. I will add 'data-day' to render functions implicitly?
-        // No I missed adding it. Let me update the render functions in this string to include data-day.
+        let show = false;
 
-        // Wait, for 'feb10' etc filter, we need the day.
-        // I will add `card.setAttribute('data-day', selectedDay.toLowerCase().replace(/\s/g, ''));`
+        if (filter === 'all') {
+            show = true;
+        } else if (filter === 'restaurants') {
+            show = isRestaurant;
+        } else if (filter === 'cafes') {
+            show = !isRestaurant; // Assuming only restaurants and cafes exist
+        } else if (filter.startsWith('feb')) {
+            // Check matches based on day
+            show = (day === filter);
+        }
 
-        // Let's refine the logic below in `applyFilter` to work without `data-day` if I missed it, 
-        // OR better, update `renderRestaurants` and `renderCafes` in this very call to add it.
-
-        // CHECK RenderRestaurants above:
-        // `const selectedDay = ...`
-        // I didn't set `card.setAttribute('data-day', ...)`
-        // I WILL FIX IT IN THE STRING BELOW BEFORE SUBMITTING.
+        card.style.display = show ? 'block' : 'none';
     });
 
-    // Actually, `applyFilter` logic in my rewrite below needs to be robust.
+    // Filter markers
+    markers.forEach(({ marker, data, type }) => {
+        const selectedDay = (type === 'restaurant'
+            ? (localStorage.getItem(`rest-${data.name}`) || data.bestDay)
+            : (localStorage.getItem(`cafe-${data.name}`) || data.bestDay));
 
-    // Retrying the ApplyFilter logic:
-    // We need to match the filter against the card's data. 
-    // Since I am rewriting the file, I can fix the render functions to include `data-day`.
+        const day = selectedDay.toLowerCase().replace(/\s/g, '');
+
+        let show = false;
+        if (filter === 'all') {
+            show = true;
+        } else if (filter === 'restaurants') {
+            show = (type === 'restaurant');
+        } else if (filter === 'cafes') {
+            show = (type === 'cafe');
+        } else if (filter.startsWith('feb')) {
+            show = (day === filter);
+        }
+
+        if (show) {
+            marker.addTo(map);
+        } else {
+            marker.remove();
+        }
+    });
 }
 
-// ... (I will include the fixed render functions and applyFilter in the final string) ...
+// Tab functionality
+function setupTabs() {
+    const tabButtons = document.querySelectorAll('.tab-btn');
+
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            const tabName = btn.getAttribute('data-tab');
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            const target = document.getElementById(`${tabName}-tab`);
+            if (target) target.classList.add('active');
+        });
+    });
+}
+
+// Search functionality
+function setupSearch() {
+    const restaurantSearch = document.getElementById('restaurant-search');
+    const cafeSearch = document.getElementById('cafe-search');
+
+    if (restaurantSearch) {
+        restaurantSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('#restaurant-list .item-card');
+            cards.forEach(card => card.style.display = (card.innerText.toLowerCase().includes(query) ? 'block' : 'none'));
+        });
+    }
+
+    if (cafeSearch) {
+        cafeSearch.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('#cafe-list .item-card');
+            cards.forEach(card => card.style.display = (card.innerText.toLowerCase().includes(query) ? 'block' : 'none'));
+        });
+    }
+}
+
+// Handle form submission
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('add-form');
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const type = document.getElementById('item-type').value;
+            const newItem = {
+                name: document.getElementById('item-name').value,
+                category: document.getElementById('item-category').value,
+                area: document.getElementById('item-area').value,
+                bestDay: document.getElementById('item-day').value,
+                description: document.getElementById('item-description').value,
+                rating: document.getElementById('item-rating').value || 'N/A',
+                link: document.getElementById('item-link').value || '',
+                lat: ORAKAI_LOCATION.lat + (Math.random() - 0.5) * 0.01,
+                lng: ORAKAI_LOCATION.lng + (Math.random() - 0.5) * 0.01,
+                distance: 'Calculating...',
+                platform: 'User Added'
+            };
+
+            if (type === 'restaurant') {
+                newItem.type = 'restaurant';
+                restaurantData.push(newItem);
+                renderRestaurants();
+            } else {
+                newItem.type = 'cafe';
+                cafeData.push(newItem);
+                renderCafes();
+            }
+
+            addAllMarkers();
+            applyFilter(currentFilter);
+            closeModal();
+        });
+    }
+});
+
+// Initialize everything
+function init() {
+    // Load data from data.js
+    if (typeof restaurants !== 'undefined') restaurantData = [...restaurants];
+    if (typeof cafes !== 'undefined') cafeData = [...cafes];
+
+    // Load previously selected items
+    loadSelections();
+
+    // Initialize map
+    initMap();
+
+    // Render content
+    renderRestaurants();
+    renderCafes();
+    renderRoutePlan();
+
+    // Setup interactions
+    setupFilters();
+    setupTabs();
+    setupSearch();
+
+    // Update initial counters
+    updateCounters();
+}
+
+// Run on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
