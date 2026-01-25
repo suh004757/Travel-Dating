@@ -43,7 +43,7 @@ const restaurants = [
         bestDay: "2월 11일",
         description: "고즈넉한 한옥에서 즐기는 전통 사찰음식. 자극적이지 않고 건강한 맛으로, 저녁에는 공연도 있습니다. (매일 영업)",
         platform: "네이버 지도",
-        link: "https://map.naver.com/p/search/%EC%82%B0%EC%B4%87",
+        link: "https://map.naver.com/p/search/%EC%82%B0%EC%B4%8C",
         rating: "⭐4.4/5",
         lat: 37.5981,
         lng: 127.0094,
