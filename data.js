@@ -8,20 +8,6 @@ const ORAKAI_LOCATION = {
 
 const restaurants = [
     {
-        name: "발우공양 (Balwoo Gongyang)",
-        category: "Hanjeongsik / Temple Food",
-        area: "Jongno",
-        distance: "8 min walk",
-        bestDay: "Feb 11",
-        description: "Michelin-starred temple cuisine in serene setting with private rooms available. Buddhist vegetarian courses showcase seasonal ingredients without raw seafood",
-        platform: "Catchtable",
-        link: "https://www.catchtable.co.kr/",
-        rating: "⭐4.4/5",
-        lat: 37.5741,
-        lng: 126.9854,
-        type: "restaurant"
-    },
-    {
         name: "미쉬매쉬 (Mishmash)",
         category: "Hansik",
         area: "Bukchon",
@@ -78,48 +64,6 @@ const restaurants = [
         type: "restaurant"
     },
     {
-        name: "진진 (Jin Jin)",
-        category: "Korean BBQ",
-        area: "Jongno",
-        distance: "10 min walk",
-        bestDay: "Feb 11",
-        description: "Premium Korean BBQ with intimate booth seating and excellent service. High-quality beef from trusted suppliers",
-        platform: "Catchtable",
-        link: "https://www.catchtable.co.kr/",
-        rating: "⭐4.4/5",
-        lat: 37.6141,
-        lng: 127.0254,
-        type: "restaurant"
-    },
-    {
-        name: "궁 (Koong)",
-        category: "Hanjeongsik",
-        area: "Insadong",
-        distance: "7 min walk",
-        bestDay: "Either",
-        description: "Elegant traditional Korean course meals in refined Hanok atmosphere. Multi-course meal showcasing various cooking techniques without raw ingredients",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Koong+Restaurant+Insadong",
-        rating: "⭐4.4/5",
-        lat: 37.6221,
-        lng: 127.0334,
-        type: "restaurant"
-    },
-    {
-        name: "남산서울타워 한쿡 (N Seoul Tower Hancook)",
-        category: "View Restaurant",
-        area: "Namsan",
-        distance: "15 min taxi",
-        bestDay: "Feb 11",
-        description: "🌆 NAMSAN VIEW HIGHLIGHT - Rotating restaurant with panoramic Seoul views serving Korean fusion cuisine. Romantic setting with food presentation focused on aesthetic beauty",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/N+Seoul+Tower+Hancook",
-        rating: "⭐4.4/5",
-        lat: 37.6301,
-        lng: 127.0414,
-        type: "restaurant"
-    },
-    {
         name: "꽃, 밥에 피다 (A Flower Blossom on the Rice)",
         category: "Hansik / Organic",
         area: "Insadong",
@@ -145,132 +89,6 @@ const restaurants = [
         rating: "⭐4.4/5",
         lat: 37.646100000000004,
         lng: 127.0574,
-        type: "restaurant"
-    },
-    {
-        name: "지리산 (Jirisan)",
-        category: "Hansik / Tofu",
-        area: "Insadong",
-        distance: "5 min walk",
-        bestDay: "Feb 10",
-        description: "Traditional tofu-focused restaurant with quiet ambiance and easy-to-digest meals. All dishes centered around silken tofu preparations. ⭐4.5/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Jirisan+Restaurant+Insadong",
-        rating: "⭐4.4/5",
-        lat: 37.5711,
-        lng: 126.9824,
-        type: "restaurant"
-    },
-    {
-        name: "옛날집 (Yetnalzip)",
-        category: "Hansik",
-        area: "Bukchon",
-        distance: "8 min walk",
-        bestDay: "Feb 11",
-        description: "Charming restaurant in historic Hanok with galbi and bulgogi specials. Homestyle Korean cooking with family recipes. ⭐4.3/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Yetnalzip+Bukchon",
-        rating: "⭐4.4/5",
-        lat: 37.579100000000004,
-        lng: 126.9904,
-        type: "restaurant"
-    },
-    {
-        name: "순우 (Sunwoo)",
-        category: "Soups & Broths",
-        area: "Jongno",
-        distance: "6 min walk",
-        bestDay: "Feb 11",
-        description: "Neighborhood favorite specializing in rich broths and stews. Famous for yukgaejang (spicy beef soup) and samgyetang (ginseng chicken). ⭐4.4/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Sunwoo+Restaurant+Jongno",
-        rating: "⭐4.4/5",
-        lat: 37.5871,
-        lng: 126.9984,
-        type: "restaurant"
-    },
-    {
-        name: "서울할머니 (Seoul Grandmother)",
-        category: "Hansik",
-        area: "Insadong",
-        distance: "4 min walk",
-        bestDay: "Feb 10",
-        description: "Traditional neighborhood diner with authentic home-cooked taste. Specializes in seasonable, simple Korean side dishes. ⭐4.2/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Seoul+Grandmother+Insadong",
-        rating: "⭐4.4/5",
-        lat: 37.5951,
-        lng: 127.0064,
-        type: "restaurant"
-    },
-    {
-        name: "강강술래 (Ganggangsulrae)",
-        category: "Korean Set Meals",
-        area: "Bukchon",
-        distance: "10 min walk",
-        bestDay: "Feb 11",
-        description: "Casual restaurant with beautiful Hanok interior and excellent bapsang (set meal) offerings. Known for quality rice and diverse banchan. ⭐4.4/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Ganggangsulrae+Bukchon",
-        rating: "⭐4.4/5",
-        lat: 37.6031,
-        lng: 127.0144,
-        type: "restaurant"
-    },
-    {
-        name: "이화 (Ihwa)",
-        category: "Jjigae / Stew",
-        area: "Jongno",
-        distance: "7 min walk",
-        bestDay: "Feb 11",
-        description: "Popular for galbijjim and jjigae dishes. Cozy interior, generous portions of comfort food. ⭐4.1/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Ihwa+Restaurant+Jongno",
-        rating: "⭐4.4/5",
-        lat: 37.6111,
-        lng: 127.0224,
-        type: "restaurant"
-    },
-    {
-        name: "청와대 앞 국밥 (Blue House Area Gugbap)",
-        category: "Soup & Rice",
-        area: "Jongno",
-        distance: "5 min walk",
-        bestDay: "Feb 10",
-        description: "No-frills local joint famous for ox bone soup and dongtaejjim. Perfect for quick, nourishing meal after travel. ⭐4.3/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Blue+House+Area+Gugbap+Jongno",
-        rating: "⭐4.4/5",
-        lat: 37.6191,
-        lng: 127.0304,
-        type: "restaurant"
-    },
-    {
-        name: "느그네 (Neugeune)",
-        category: "Korean Fusion",
-        area: "Insadong",
-        distance: "3 min walk",
-        bestDay: "Either",
-        description: "Contemporary space serving creative Korean dishes with modern plating. Uses premium ingredients with interesting flavor combinations. ⭐4.3/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Neugeune+Insadong",
-        rating: "⭐4.4/5",
-        lat: 37.6271,
-        lng: 127.0384,
-        type: "restaurant"
-    },
-    {
-        name: "도마 (Doma)",
-        category: "Korean BBQ",
-        area: "Hongdae",
-        distance: "20 min subway",
-        bestDay: "Feb 12",
-        description: "Trendy Korean BBQ spot with interesting cuts and house marinades. Stylish interior and attentive service. ⭐4.4/5",
-        platform: "Google Maps",
-        link: "https://www.google.com/maps/search/Doma+Korean+BBQ+Hongdae",
-        rating: "⭐4.4/5",
-        lat: 37.6351,
-        lng: 127.04639999999999,
         type: "restaurant"
     }
 ];
@@ -863,7 +681,7 @@ const activities = [
         lat: 37.575100000000006,
         lng: 126.98639999999999,
         type: "activity"
-    },
+    }
 ];
 
 const routePlans = {
