@@ -25,3 +25,4 @@ npm-debug.log*
 # Temporary files
 *.tmp
 .cache/
+update_rls_policies.sql

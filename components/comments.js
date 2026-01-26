@@ -1,5 +1,6 @@
 // Comments Component
 // Inline comments for specific places
+// Auth required for add/delete
 
 async function loadComments(placeId) {
     const container = document.getElementById(`comments-${placeId}`);
@@ -14,28 +15,45 @@ async function loadComments(placeId) {
 
         if (error) throw error;
 
+        const canEdit = window.isAuthenticated && isAuthenticated();
+
         let html = '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0;">';
         html += '<div style="font-size: 0.9rem; font-weight: 600; color: #666; margin-bottom: 10px;">💬 메모</div>';
 
         if (comments.length > 0) {
             html += comments.map(c => `
-                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 8px; font-size: 0.85rem;">
-                    <div style="color: #333;">"${c.text}"</div>
+                <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 8px; font-size: 0.85rem; position: relative;">
+                    <div style="color: #333; padding-right: ${canEdit ? '30px' : '0'};">"${c.text}"</div>
                     <div style="color: #999; font-size: 0.75rem; margin-top: 5px;">- ${c.author || '익명'}</div>
+                    ${canEdit ? `
+                        <button onclick="deleteComment('${c.id}', '${placeId}')" 
+                                style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;">
+                            ×
+                        </button>
+                    ` : ''}
                 </div>
             `).join('');
         }
 
-        html += `
-            <div style="display: flex; gap: 5px; margin-top: 10px;">
-                <input type="text" id="comment-input-${placeId}" placeholder="메모 추가..." 
-                       style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.85rem;">
-                <button onclick="addComment('${placeId}')" 
-                        style="background: #ff6b9d; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem;">
-                    추가
-                </button>
-            </div>
-        `;
+        if (canEdit) {
+            html += `
+                <div style="display: flex; gap: 5px; margin-top: 10px;">
+                    <input type="text" id="comment-input-${placeId}" placeholder="메모 추가..." 
+                           style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.85rem;">
+                    <button onclick="addComment('${placeId}')" 
+                            style="background: #ff6b9d; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem;">
+                        추가
+                    </button>
+                </div>
+            `;
+        } else {
+            html += `
+                <div style="margin-top: 10px; padding: 8px; background: #f8f9fa; border-radius: 5px; text-align: center; font-size: 0.8rem; color: #666;">
+                    🔒 메모를 추가하려면 <a href="#" onclick="showLoginModal(); return false;" style="color: #ff6b9d; text-decoration: none;">로그인</a>하세요
+                </div>
+            `;
+        }
+
         html += '</div>';
 
         container.innerHTML = html;
@@ -57,7 +75,7 @@ async function addComment(placeId) {
             .insert({
                 place_id: placeId,
                 text: text,
-                author: '익명'
+                author: currentUser?.email || '익명'
             });
 
         if (error) throw error;
@@ -65,6 +83,33 @@ async function addComment(placeId) {
         input.value = '';
         await loadComments(placeId);
     } catch (error) {
-        alert('메모 추가 실패: ' + error.message);
+        if (error.message.includes('row-level security')) {
+            alert('로그인이 필요합니다.');
+            showLoginModal();
+        } else {
+            alert('메모 추가 실패: ' + error.message);
+        }
+    }
+}
+
+async function deleteComment(commentId, placeId) {
+    if (!confirm('이 메모를 삭제하시겠습니까?')) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('comments')
+            .delete()
+            .eq('id', commentId);
+
+        if (error) throw error;
+
+        await loadComments(placeId);
+    } catch (error) {
+        if (error.message.includes('row-level security')) {
+            alert('로그인이 필요합니다.');
+            showLoginModal();
+        } else {
+            alert('삭제 실패: ' + error.message);
+        }
     }
 }
