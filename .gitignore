@@ -1,28 +1,37 @@
-# Database backups
-*.sql.backup
-
-# Node modules (if added later)
-node_modules/
-
-# Build outputs
-dist/
-build/
+# Development tools (keep in repo for contributors)
+# tools/ folder is intentionally tracked
 
 # OS files
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # Logs
 *.log
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # Temporary files
 *.tmp
 .cache/
-update_rls_policies.sql
+*.bak
+
+# Excel temp files
+~$*.xlsx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
