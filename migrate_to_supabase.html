@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Migration Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="itineraries/seoul_feb_2026.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #ff6b9d;
+        }
+
+        button {
+            background: #ff6b9d;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #ff4d7d;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🚀 Supabase Migration Tool</h1>
+        <p>이 도구는 <code>itineraries/seoul_feb_2026.js</code> 데이터를 Supabase 데이터베이스로 업로드합니다.</p>
+
+        <div style="background: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <strong>⚠️ 사전 준비:</strong>
+            <ol>
+                <li>Supabase 프로젝트 생성 완료</li>
+                <li><code>setup_database.sql</code> 실행 완료</li>
+                <li><code>config.js</code>에 API 키 입력 완료</li>
+            </ol>
+        </div>
+
+        <button id="migrateBtn" onclick="migrateData()">📤 서울 데이터 업로드</button>
+        <button onclick="verifyData()">✅ 데이터 확인</button>
+        <button onclick="clearData()" style="background: #dc3545;">🗑️ 모든 데이터 삭제</button>
+
+        <div id="status"></div>
+    </div>
+
+    <script>
+        const { createClient } = supabase;
+        let supabaseClient;
+
+        // Initialize Supabase client
+        try {
+            supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+            log('✅ Supabase 연결 성공', 'success');
+        } catch (error) {
+            log('❌ Supabase 연결 실패: config.js를 확인하세요\n' + error.message, 'error');
+        }
+
+        function log(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            const timestamp = new Date().toLocaleTimeString('ko-KR');
+            statusDiv.innerHTML = `<div class="${type}">[${timestamp}] ${message}</div>` + statusDiv.innerHTML;
+        }
+
+        async function migrateData() {
+            const btn = document.getElementById('migrateBtn');
+            btn.disabled = true;
+            log('🚀 마이그레이션 시작...', 'info');
+
+            try {
+                // 1. Insert Trip
+                log('1/3 Trip 데이터 삽입 중...', 'info');
+                const { data: trip, error: tripError } = await supabaseClient
+                    .from('trips')
+                    .insert({
+                        slug: 'seoul_feb_2026',
+                        title: '서울 로맨틱 데이트',
+                        subtitle: '오라카이 인사동 스위트 • 한옥 & 뷰 중심',
+                        emoji: '🏯',
+                        base_location: ORAKAI_LOCATION,
+                        start_date: '2026-02-10',
+                        end_date: '2026-02-12'
+                    })
+                    .select()
+                    .single();
+
+                if (tripError) throw tripError;
+                log(`✅ Trip 생성 완료: ${trip.id}`, 'success');
+
+                // 2. Insert Places (Restaurants + Cafes)
+                log('2/3 Places 데이터 삽입 중...', 'info');
+                const allPlaces = [...restaurants, ...cafes].map(place => ({
+                    trip_id: trip.id,
+                    ...place
+                }));
+
+                const { data: places, error: placesError } = await supabaseClient
+                    .from('places')
+                    .insert(allPlaces)
+                    .select();
+
+                if (placesError) throw placesError;
+                log(`✅ Places 생성 완료: ${places.length}개`, 'success');
+
+                // 3. Insert Routes
+                log('3/3 Routes 데이터 삽입 중...', 'info');
+                const routeRecords = Object.entries(routePlans).map(([key, value]) => ({
+                    trip_id: trip.id,
+                    day_key: key,
+                    title: value.title,
+                    options: value.options
+                }));
+
+                const { data: routes, error: routesError } = await supabaseClient
+                    .from('routes')
+                    .insert(routeRecords)
+                    .select();
+
+                if (routesError) throw routesError;
+                log(`✅ Routes 생성 완료: ${routes.length}개`, 'success');
+
+                log('🎉 마이그레이션 완료!\n\n' +
+                    `- Trip: 1개\n` +
+                    `- Places: ${places.length}개\n` +
+                    `- Routes: ${routes.length}개`, 'success');
+
+            } catch (error) {
+                log('❌ 마이그레이션 실패:\n' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function verifyData() {
+            log('🔍 데이터 확인 중...', 'info');
+            try {
+                const { data: trips } = await supabaseClient.from('trips').select('*');
+                const { data: places } = await supabaseClient.from('places').select('*');
+                const { data: routes } = await supabaseClient.from('routes').select('*');
+
+                log(`📊 현재 데이터베이스 상태:\n` +
+                    `- Trips: ${trips?.length || 0}개\n` +
+                    `- Places: ${places?.length || 0}개\n` +
+                    `- Routes: ${routes?.length || 0}개`, 'info');
+            } catch (error) {
+                log('❌ 확인 실패: ' + error.message, 'error');
+            }
+        }
+
+        async function clearData() {
+            if (!confirm('⚠️ 모든 데이터를 삭제하시겠습니까?')) return;
+
+            log('🗑️ 데이터 삭제 중...', 'warning');
+            try {
+                await supabaseClient.from('trips').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                log('✅ 모든 데이터 삭제 완료', 'success');
+            } catch (error) {
+                log('❌ 삭제 실패: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+
+</html>

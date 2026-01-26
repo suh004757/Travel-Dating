@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Date Log - Main Hub</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Specific styles for the Hub page */
         .hub-container {
@@ -117,6 +118,12 @@
             margin-bottom: 10px;
         }
 
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #ff6b9d;
+        }
+
         @media (max-width: 600px) {
             .hub-container {
                 padding: 10px;
@@ -136,26 +143,89 @@
             <p>우리의 소중한 순간들을 기록하는 공간</p>
         </header>
 
-        <div class="date-list">
-            <!-- Existing Plan -->
-            <a href="view.html?plan=seoul_feb_2026" class="date-card">
-                <div class="card-image">🏯</div>
-                <div class="card-content">
-                    <div class="card-date">2026.02.10 - 02.12</div>
-                    <div class="card-title">서울 로맨틱 데이트</div>
-                    <div class="card-desc">오라카이 인사동 스위트, 북촌 한옥마을, 남산 뷰 맛집 투어</div>
-                </div>
-            </a>
+        <div class="date-list" id="dateList">
+            <div class="loading">로딩 중...</div>
+        </div>
+    </div>
 
-            <!-- Placeholder / Add New -->
-            <div class="date-card add-new" onclick="alert('새로운 여행을 추가하려면 itineraries 폴더에 파일을 만들고 index.html에 추가하세요!')">
+    <script src="config.js"></script>
+    <script>
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+
+        async function loadTrips() {
+            const container = document.getElementById('dateList');
+
+            try {
+                const { data: trips, error } = await supabaseClient
+                    .from('trips')
+                    .select('*')
+                    .order('start_date', { ascending: false });
+
+                if (error) throw error;
+
+                container.innerHTML = '';
+
+                // Render trip cards
+                trips.forEach(trip => {
+                    const card = createTripCard(trip);
+                    container.appendChild(card);
+                });
+
+                // Add "New Trip" placeholder
+                const addCard = createAddCard();
+                container.appendChild(addCard);
+
+            } catch (error) {
+                container.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #dc3545;">
+                        ❌ 데이터를 불러올 수 없습니다.<br>
+                        <small>${error.message}</small><br>
+                        <small>config.js 설정을 확인하세요.</small>
+                    </div>
+                `;
+            }
+        }
+
+        function createTripCard(trip) {
+            const card = document.createElement('a');
+            card.href = `view.html?plan=${trip.slug}`;
+            card.className = 'date-card';
+
+            const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('ko-KR') : '';
+            const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('ko-KR') : '';
+            const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : '날짜 미정';
+
+            card.innerHTML = `
+                <div class="card-image">${trip.emoji || '💕'}</div>
+                <div class="card-content">
+                    <div class="card-date">${dateRange}</div>
+                    <div class="card-title">${trip.title}</div>
+                    <div class="card-desc">${trip.subtitle || ''}</div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function createAddCard() {
+            const card = document.createElement('div');
+            card.className = 'date-card add-new';
+            card.onclick = () => alert('Phase 2에서 새 여행 추가 기능이 추가됩니다!');
+
+            card.innerHTML = `
                 <div class="card-content add-content">
                     <span class="plus-icon">+</span>
                     <div>새로운 데이트 추가하기</div>
                 </div>
-            </div>
-        </div>
-    </div>
+            `;
+
+            return card;
+        }
+
+        // Load trips on page load
+        loadTrips();
+    </script>
 </body>
 
 </html>

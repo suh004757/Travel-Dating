@@ -1,49 +1,86 @@
-# 💕 서울 로맨틱 데이트 (Seoul Romantic Date Itinerary)
+# 💕 Our Date Log - Supabase Backend
 
-여러 번의 데이트 코스를 관리할 수 있는 **데이트 로그(Date Log) 허브**로 업데이트되었습니다. `index.html`을 열면 등록된 데이트 목록을 볼 수 있고, 각 카드를 클릭하면 상세 계획으로 이동합니다.
+여러 번의 데이트 코스를 관리할 수 있는 **데이트 로그 허브**입니다. Supabase 백엔드를 사용하여 실시간 협업이 가능합니다.
 
-## ✨ 프로젝트 특징
+## ✨ 주요 기능
 
-### 1. 멀티 데이트 관리 (Multi-Itinerary Hub)
-*   **메인 허브 (`index.html`):** 우리의 모든 데이트 기록을 한눈에 볼 수 있는 대시보드입니다. 새로운 데이트가 생길 때마다 카드를 추가할 수 있습니다.
-*   **동적 뷰어 (`view.html`):** 하나의 템플릿으로 여러 데이트 데이터를 불러와 보여줍니다. 유지보수가 간편합니다.
+### 1. 멀티 데이트 관리
+*   **메인 허브 (`index.html`):** 모든 데이트 기록을 한눈에 볼 수 있는 대시보드
+*   **동적 뷰어 (`view.html`):** 데이터베이스에서 실시간으로 불러오는 상세 페이지
 
-### 2. 엄선된 장소 (Curated Venues)
-*   **🍽️ 식당 (6곳):** 미슐랭 맛집, 한옥 다이닝, 사찰 음식 등 (미쉬매쉬, 온6.5 등)
-*   **☕ 카페 (8곳):** 한옥 뷰 루프탑, 전통 찻집 등 (그린마일, 청수당 등)
-*   **❌ 제외 기준:** 서양식 메뉴 제외, 한국적 분위기 중심
+### 2. 실시간 협업 기능
+*   **☀️ 날씨 위젯:** OpenWeather API로 데이트 날짜의 날씨 자동 표시
+*   **✅ 공유 할 일 목록:** 실시간 동기화되는 체크리스트
+*   **💬 장소별 메모:** 각 식당/카페에 메모 달기
 
-### 3. 모바일 최적화 (Mobile Optimized)
-*   **🔗 네이버 지도 연동:** 모바일 전용 주소(`m.map.naver.com`) 사용으로 스마트폰 호환성 100%.
-*   **📱 반응형 디자인:** PC와 모바일 어디서든 깔끔한 화면.
+### 3. 엄선된 장소
+*   **🍽️ 식당 (6곳):** 미슐랭 맛집, 한옥 다이닝 등
+*   **☕ 카페 (8곳):** 한옥 뷰 루프탑, 전통 찻집 등
+*   **🗺️ 지도 시각화:** Leaflet.js로 위치 표시
 
-## 📂 파일 구조 및 추가 방법
+### 4. 모바일 최적화
+*   **📱 반응형 디자인:** PC와 모바일 모두 지원
+*   **🔗 네이버 지도 연동:** 모바일 전용 링크 (`m.map.naver.com`)
 
-### 파일 구조
-*   `index.html`: 메인 대시보드 (날짜 목록)
-*   `view.html`: 데이트 상세 뷰어 (지도 및 정보 표시)
-*   `app.js` & `style.css`: 공통 로직 및 디자인
-*   `itineraries/`: 데이터 폴더
-    *   `seoul_feb_2026.js`: 2월 서울 데이트 데이터
-    *   `template.js`: 새 데이트 작성을 위한 빈 템플릿
+## 🚀 시작하기
 
-### 🆕 새로운 데이트 추가하는 법
-1.  `itineraries/template.js` 파일을 복사하여 새 파일(예: `busan_trip.js`)을 만듭니다.
-2.  새 파일 내부의 식당, 카페, 루트 정보를 작성합니다.
-3.  `index.html` 파일을 열고 `<div class="date-list">` 안에 아래 코드를 추가합니다.
+### 1단계: Supabase 프로젝트 생성
+1. [supabase.com](https://supabase.com)에서 무료 프로젝트 생성
+2. SQL Editor에서 `setup_database.sql` 실행
+3. Settings > API에서 URL과 Anon Key 복사
 
-```html
-<a href="view.html?plan=busan_trip" class="date-card">
-    <div class="card-image">🌊</div>
-    <div class="card-content">
-        <div class="card-date">2026.05.05</div>
-        <div class="card-title">부산 여행</div>
-        <div class="card-desc">해운대 앞바다와 맛집 투어</div>
-    </div>
-</a>
+### 2단계: 설정 파일 업데이트
+`config.js` 파일을 열어 API 키 입력:
+```javascript
+const SUPABASE_CONFIG = {
+    url: 'YOUR_SUPABASE_URL',
+    anonKey: 'YOUR_ANON_KEY'
+};
+
+const WEATHER_CONFIG = {
+    apiKey: 'YOUR_OPENWEATHER_KEY', // openweathermap.org에서 무료 발급
+    enabled: true
+};
 ```
 
-## 🚀 사용 방법
-1.  `index.html`을 엽니다.
-2.  **"서울 로맨틱 데이트"** 카드를 클릭하여 2월 계획을 확인합니다.
-3.  지도와 장소, 추천 루트(Option A/B)를 확인하며 즐거운 시간을 보냅니다!
+### 3단계: 데이터 마이그레이션
+1. 브라우저에서 `migrate_to_supabase.html` 열기
+2. "서울 데이터 업로드" 버튼 클릭
+3. 성공 메시지 확인
+
+### 4단계: 앱 실행
+`index.html`을 브라우저에서 열면 완료!
+
+## 📂 파일 구조
+
+```
+Travel---Temporary/
+├── index.html              # 메인 허브 (여행 목록)
+├── view.html               # 상세 뷰어
+├── app.js                  # 메인 로직
+├── style.css               # 디자인
+├── config.js               # API 키 설정
+├── setup_database.sql      # DB 스키마
+├── migrate_to_supabase.html # 마이그레이션 도구
+├── components/
+│   ├── weather.js          # 날씨 위젯
+│   ├── todos.js            # 할 일 목록
+│   └── comments.js         # 메모 기능
+└── itineraries/
+    └── seoul_feb_2026.js   # 백업 데이터
+```
+
+## 🎨 디자인 테마
+- **컬러:** 핑크 계열 (#ff6b9d, #fff5f7)
+- **스타일:** 부드러운 카드 레이아웃, 둥근 모서리
+- **폰트:** Apple 시스템 폰트
+
+## 🔮 Phase 2 (예정)
+- 🔐 매직 링크 로그인
+- 🌍 공개 플랜 피드
+- 📍 지역별 필터링
+- ❤️ 좋아요 시스템
+- 🇰🇷 카카오 로그인
+
+---
+*Created with ❤️ for romantic getaways*

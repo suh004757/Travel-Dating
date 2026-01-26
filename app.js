@@ -1,16 +1,88 @@
 // Global variables
 let map;
 let markers = [];
-let restaurantData = [];
-let cafeData = [];
+let currentTrip = null;
 let currentFilter = 'all';
+let supabaseClient;
 
-// Initialize map with Leaflet
-function initMap() {
+// Initialize Supabase
+const { createClient } = supabase;
+supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+
+// Main initialization
+async function init() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const slug = urlParams.get('plan') || 'seoul_feb_2026';
+
+    try {
+        await loadItinerary(slug);
+        setupFilters();
+        setupTabs();
+    } catch (error) {
+        showError('데이터를 불러올 수 없습니다: ' + error.message);
+    }
+}
+
+// Load complete itinerary from Supabase
+async function loadItinerary(slug) {
+    // 1. Load Trip
+    const { data: trip, error: tripError } = await supabaseClient
+        .from('trips')
+        .select('*')
+        .eq('slug', slug)
+        .single();
+
+    if (tripError) throw tripError;
+    currentTrip = trip;
+
+    // Update page title
+    document.getElementById('page-title').textContent = trip.emoji + ' ' + trip.title;
+    document.getElementById('page-subtitle').textContent = trip.subtitle || '';
+
+    // 2. Load Places
+    const { data: places, error: placesError } = await supabaseClient
+        .from('places')
+        .select('*')
+        .eq('trip_id', trip.id);
+
+    if (placesError) throw placesError;
+
+    const restaurants = places.filter(p => p.type === 'restaurant');
+    const cafes = places.filter(p => p.type === 'cafe');
+
+    // 3. Load Routes
+    const { data: routes, error: routesError } = await supabaseClient
+        .from('routes')
+        .select('*')
+        .eq('trip_id', trip.id)
+        .order('day_key');
+
+    if (routesError) throw routesError;
+
+    // 4. Initialize Map
+    initMap(trip.base_location, [...restaurants, ...cafes]);
+
+    // 5. Render Lists
+    renderRestaurants(restaurants);
+    renderCafes(cafes);
+    renderRoutePlan(routes);
+
+    // 6. Load Weather (if enabled)
+    if (window.loadWeather && WEATHER_CONFIG.enabled) {
+        loadWeather(trip);
+    }
+
+    // 7. Load To-Dos (if component exists)
+    if (window.loadTodos) {
+        loadTodos(trip.id);
+    }
+}
+
+// Initialize map
+function initMap(baseLocation, places) {
     if (!document.getElementById('map')) return;
 
-    // Center on Orakai
-    map = L.map('map').setView([ORAKAI_LOCATION.lat, ORAKAI_LOCATION.lng], 14);
+    map = L.map('map').setView([baseLocation.lat, baseLocation.lng], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
@@ -19,143 +91,131 @@ function initMap() {
 
     // Hotel marker
     const hotelIcon = L.divIcon({
-        html: '<div style="background:#ff6b9d;color:white;padding:8px 12px;border-radius:20px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3);white-space:nowrap;">🏨 오라카이 호텔</div>',
+        html: `<div style="background:#ff6b9d;color:white;padding:8px 12px;border-radius:20px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3);white-space:nowrap;">🏨 ${baseLocation.name}</div>`,
         className: 'custom-marker',
-        iconSize: [150, 40],
-        iconAnchor: [75, 40]
+        iconSize: [200, 40],
+        iconAnchor: [100, 40]
     });
 
-    L.marker([ORAKAI_LOCATION.lat, ORAKAI_LOCATION.lng], { icon: hotelIcon })
+    L.marker([baseLocation.lat, baseLocation.lng], { icon: hotelIcon })
         .addTo(map)
-        .bindPopup(`<b>${ORAKAI_LOCATION.name}</b><br>${ORAKAI_LOCATION.address}`);
+        .bindPopup(`<b>${baseLocation.name}</b><br>${baseLocation.address}`);
 
-    // Add all Item markers
-    addAllMarkers();
+    // Add place markers
+    addAllMarkers(places);
 }
 
-function addAllMarkers() {
+// Add markers to map
+function addAllMarkers(places) {
     if (!map) return;
 
     // Clear existing
     markers.forEach(m => m.remove());
     markers = [];
 
-    // Restaurants
-    restaurantData.forEach(r => {
-        if (currentFilter === 'cafes') return; // Hide if cafes only selected
+    places.forEach(place => {
+        // Filter based on current filter
+        if (currentFilter === 'restaurants' && place.type !== 'restaurant') return;
+        if (currentFilter === 'cafes' && place.type !== 'cafe') return;
+
+        const color = place.type === 'restaurant' ? '#ff6b9d' : '#8b4513';
+        const emoji = place.type === 'restaurant' ? '🍽️' : '☕';
 
         const icon = L.divIcon({
-            html: `<div style="background:#ff6b9d;color:white;padding:6px 10px;border-radius:15px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.8rem;">🍽️ ${r.name}</div>`,
+            html: `<div style="background:${color};color:white;padding:6px 10px;border-radius:15px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.8rem;">${emoji} ${place.name}</div>`,
             className: 'custom-marker',
             iconSize: [200, 30],
             iconAnchor: [100, 30]
         });
 
-        const marker = L.marker([r.lat, r.lng], { icon: icon })
+        const marker = L.marker([place.lat, place.lng], { icon: icon })
             .addTo(map)
-            .bindPopup(`<b>${r.name}</b><br>${r.category}<br>${r.description}`);
-
-        // No explicit 'show on map' click needed, they are just there.
-        // Clicking marker could highlight list item? Optional.
-
-        markers.push(marker);
-    });
-
-    // Cafes
-    cafeData.forEach(c => {
-        if (currentFilter === 'restaurants') return; // Hide if restaurants only selected
-
-        const icon = L.divIcon({
-            html: `<div style="background:#8b4513;color:white;padding:6px 10px;border-radius:15px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.8rem;">☕ ${c.name}</div>`,
-            className: 'custom-marker',
-            iconSize: [200, 30],
-            iconAnchor: [100, 30]
-        });
-
-        const marker = L.marker([c.lat, c.lng], { icon: icon })
-            .addTo(map)
-            .bindPopup(`<b>${c.name}</b><br>${c.category}<br>${c.description}`);
+            .bindPopup(`<b>${place.name}</b><br>${place.category}<br>${place.description}`);
 
         markers.push(marker);
     });
 }
 
-function renderRestaurants() {
+// Render restaurants
+function renderRestaurants(restaurants) {
     const container = document.getElementById('restaurant-list');
     if (!container) return;
     container.innerHTML = '';
 
-    if (restaurantData.length === 0) {
-        container.innerHTML = '<p style="padding:20px;text-align:center">No Data</p>';
+    if (restaurants.length === 0) {
+        container.innerHTML = '<p style="padding:20px;text-align:center">식당 데이터가 없습니다</p>';
         return;
     }
 
-    restaurantData.forEach(r => {
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.innerHTML = `
-            <div class="item-header">
-                <h3>${r.name}</h3>
-                <span class="category">${r.category}</span>
-            </div>
-            <div class="details">
-                <span>📍 ${r.area}</span>
-                <span>🚶 ${r.distance}</span>
-            </div>
-            <div class="description">${r.description}</div>
-            <div class="links">
-                 <a href="${r.link}" target="_blank" class="map-link">📍 네이버 지도 보기</a>
-            </div>
-        `;
+    restaurants.forEach(r => {
+        const card = createPlaceCard(r);
         container.appendChild(card);
     });
 }
 
-function renderCafes() {
+// Render cafes
+function renderCafes(cafes) {
     const container = document.getElementById('cafe-list');
     if (!container) return;
     container.innerHTML = '';
 
-    if (cafeData.length === 0) {
-        container.innerHTML = '<p style="padding:20px;text-align:center">No Data</p>';
+    if (cafes.length === 0) {
+        container.innerHTML = '<p style="padding:20px;text-align:center">카페 데이터가 없습니다</p>';
         return;
     }
 
-    cafeData.forEach(c => {
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.innerHTML = `
-            <div class="item-header">
-                <h3>${c.name}</h3>
-                <span class="category">${c.category}</span>
-            </div>
-            <div class="details">
-                <span>📍 ${c.area}</span>
-                <span>🚶 ${c.distance}</span>
-            </div>
-            <div class="description">${c.description}</div>
-            <div class="links">
-                 <a href="${c.link}" target="_blank" class="map-link">📍 네이버 지도 보기</a>
-            </div>
-        `;
+    cafes.forEach(c => {
+        const card = createPlaceCard(c);
         container.appendChild(card);
     });
 }
 
-function renderRoutePlan() {
+// Create place card
+function createPlaceCard(place) {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+        <div class="item-header">
+            <h3>${place.name}</h3>
+            <span class="category">${place.category}</span>
+        </div>
+        <div class="details">
+            <span>📍 ${place.area}</span>
+            <span>🚶 ${place.distance}</span>
+        </div>
+        <div class="description">${place.description}</div>
+        <div class="links">
+            <a href="${place.link}" target="_blank" class="map-link">📍 네이버 지도 보기</a>
+        </div>
+        <div class="comments-section" id="comments-${place.id}"></div>
+    `;
+
+    // Load comments if component exists
+    if (window.loadComments) {
+        setTimeout(() => loadComments(place.id), 100);
+    }
+
+    return card;
+}
+
+// Render route plan
+function renderRoutePlan(routes) {
     const container = document.getElementById('route-content');
     if (!container) return;
     container.innerHTML = '';
 
-    if (!routePlans) return;
+    if (routes.length === 0) {
+        container.innerHTML = '<p style="padding:20px;text-align:center">루트 데이터가 없습니다</p>';
+        return;
+    }
 
-    Object.keys(routePlans).forEach(dayKey => {
-        const dayPlan = routePlans[dayKey];
-        const section = document.createElement('div');
+    routes.forEach(route => {
+        const section = document.createElement('details');
         section.className = 'day-section';
+        section.open = routes.indexOf(route) === 0; // First day open by default
 
         let optionsHTML = '';
-        dayPlan.options.forEach(opt => {
+        route.options.forEach(opt => {
             let actsHTML = opt.activities.map(a => `
                 <div class="route-item">
                     <span class="time">${a.time}</span>
@@ -176,7 +236,7 @@ function renderRoutePlan() {
         });
 
         section.innerHTML = `
-            <h3 class="day-title">${dayPlan.title}</h3>
+            <summary class="day-title">${route.title}</summary>
             <div class="options-container">
                 ${optionsHTML}
             </div>
@@ -185,22 +245,28 @@ function renderRoutePlan() {
     });
 }
 
+// Setup filters
 function setupFilters() {
     const btns = document.querySelectorAll('.filter-btn');
     btns.forEach(btn => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', async () => {
             btns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 
             currentFilter = btn.getAttribute('data-filter');
-            addAllMarkers(); // Re-render markers based on filter
 
-            // Also switch tab implicitly? No, tabs are separate list views.
-            // But let's keep it simple.
+            // Reload places with filter
+            const { data: places } = await supabaseClient
+                .from('places')
+                .select('*')
+                .eq('trip_id', currentTrip.id);
+
+            addAllMarkers(places);
         });
     });
 }
 
+// Setup tabs
 function setupTabs() {
     const btns = document.querySelectorAll('.tab-btn');
     btns.forEach(btn => {
@@ -215,28 +281,26 @@ function setupTabs() {
     });
 }
 
-function init() {
-    if (typeof restaurants !== 'undefined') restaurantData = restaurants;
-    if (typeof cafes !== 'undefined') cafeData = cafes;
-
-    initMap();
-    renderRestaurants();
-    renderCafes();
-    renderRoutePlan();
-
-    setupFilters();
-    setupTabs();
+// Share functionality
+function shareItinerary() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => alert('링크가 복사되었습니다!'));
 }
 
+// Error display
+function showError(message) {
+    document.querySelector('.container').innerHTML = `
+        <div style="text-align: center; padding: 100px 20px; color: #dc3545;">
+            <h2>❌ 오류 발생</h2>
+            <p>${message}</p>
+            <a href="index.html" style="color: #ff6b9d;">← 메인으로 돌아가기</a>
+        </div>
+    `;
+}
+
+// Initialize on page load
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
     init();
 }
-
-function shareItinerary() {
-    // Simplified share
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => alert('링크가 복사되었습니다!'));
-}
-function downloadPlan() { alert('기능 준비중입니다.'); }
