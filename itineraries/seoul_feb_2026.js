@@ -1,4 +1,4 @@
-// Data for Seoul Date Itinerary
+// Data for Seoul Date Itinerary (Feb 10-12, 2026)
 const ORAKAI_LOCATION = {
     name: "오라카이 인사동 스위트",
     lat: 37.5741,
@@ -40,7 +40,7 @@ const restaurants = [
         distance: "도보 5분",
         description: "고즈넉한 한옥에서 즐기는 전통 사찰음식. 자극적이지 않고 건강한 맛으로, 저녁에는 공연도 있습니다. (매일 영업)",
         platform: "네이버 지도",
-        link: "https://m.map.naver.com/search2/search.naver?query=%EC%82%B0%EC%B4%8C%20%EC%9D%B8%EC%82%AC%EB%8F%99",
+        link: "https://m.map.naver.com/search2/search.naver?query=%EC%82%B0%EC%B4%87%20%EC%9D%B8%EC%82%AC%EB%8F%99",
         rating: "⭐4.4/5",
         lat: 37.5981,
         lng: 127.0094,

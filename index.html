@@ -4,65 +4,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seoul Date Itinerary - Feb 10-12, 2026</title>
+    <title>Our Date Log - Main Hub</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        /* Specific styles for the Hub page */
+        .hub-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        .hub-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #fff5f7 0%, #fff 100%);
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.1);
+        }
+
+        .hub-header h1 {
+            color: #ff6b9d;
+            margin: 0;
+            font-size: 2.5rem;
+        }
+
+        .hub-header p {
+            color: #666;
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+
+        .date-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .date-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #eee;
+        }
+
+        .date-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.15);
+            border-color: #ffb3c9;
+        }
+
+        .card-image {
+            height: 150px;
+            background-color: #ffe8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .card-content {
+            padding: 20px;
+        }
+
+        .card-date {
+            color: #ff6b9d;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .card-title {
+            margin: 10px 0;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .card-desc {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .add-new {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #ddd;
+            background: #fafafa;
+        }
+
+        .add-new:hover {
+            border-color: #ff6b9d;
+            background: #fff5f7;
+        }
+
+        .add-content {
+            text-align: center;
+            color: #888;
+        }
+
+        .plus-icon {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .hub-container {
+                padding: 10px;
+            }
+
+            .hub-header h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <h1>💕 서울 로맨틱 데이트 (2/10-12)</h1>
-            <p class="subtitle">오라카이 인사동 스위트 • 한옥 & 뷰 중심</p>
+    <div class="hub-container">
+        <header class="hub-header">
+            <h1>Our Date Log</h1>
+            <p>우리의 소중한 순간들을 기록하는 공간</p>
         </header>
 
-        <nav class="filter-nav">
-            <button class="filter-btn active" data-filter="all">전체 보기</button>
-            <button class="filter-btn" data-filter="restaurants">🍽️ 식당</button>
-            <button class="filter-btn" data-filter="cafes">☕ 카페</button>
-            <button class="share-btn" onclick="shareItinerary()">📤 공유하기</button>
-            <button class="download-btn" onclick="downloadPlan()">⬇️ 저장하기</button>
-        </nav>
-
-        <div class="main-content">
-            <div class="map-container">
-                <div id="map"></div>
-                <!-- Legend removed as per simplifying UI -->
-            </div>
-
-            <div class="info-panel">
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="restaurants">식당 (Restaurants)</button>
-                    <button class="tab-btn" data-tab="cafes">카페 (Cafes)</button>
-                    <button class="tab-btn" data-tab="route">추천 루트 (Route)</button>
+        <div class="date-list">
+            <!-- Existing Plan -->
+            <a href="view.html?plan=seoul_feb_2026" class="date-card">
+                <div class="card-image">🏯</div>
+                <div class="card-content">
+                    <div class="card-date">2026.02.10 - 02.12</div>
+                    <div class="card-title">서울 로맨틱 데이트</div>
+                    <div class="card-desc">오라카이 인사동 스위트, 북촌 한옥마을, 남산 뷰 맛집 투어</div>
                 </div>
+            </a>
 
-                <div id="restaurants-tab" class="tab-content active">
-                    <div id="restaurant-list" class="item-list"></div>
-                </div>
-
-                <div id="cafes-tab" class="tab-content">
-                    <div id="cafe-list" class="item-list"></div>
-                </div>
-
-                <div id="route-tab" class="tab-content">
-                    <div class="route-plan">
-                        <div id="route-content"></div>
-                    </div>
+            <!-- Placeholder / Add New -->
+            <div class="date-card add-new" onclick="alert('새로운 여행을 추가하려면 itineraries 폴더에 파일을 만들고 index.html에 추가하세요!')">
+                <div class="card-content add-content">
+                    <span class="plus-icon">+</span>
+                    <div>새로운 데이트 추가하기</div>
                 </div>
             </div>
         </div>
-
-        <footer>
-            <p>Created with ❤️ for a romantic Seoul getaway</p>
-        </footer>
     </div>
-
-    <script src="data.js"></script>
-    <script src="app.js"></script>
 </body>
 
 </html>

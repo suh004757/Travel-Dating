@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seoul Date Itinerary - Viewer</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Back to Home Link -->
+        <div style="padding: 10px; background: #fff5f7; border-bottom: 1px solid #ffe8f0;">
+            <a href="index.html" style="text-decoration: none; color: #ff6b9d; font-weight: bold;">← 메인으로 돌아가기
+                (Main)</a>
+        </div>
+
+        <header>
+            <h1 id="page-title">💕 서울 로맨틱 데이트</h1>
+            <p class="subtitle" id="page-subtitle">오라카이 인사동 스위트 • 한옥 & 뷰 중심</p>
+        </header>
+
+        <nav class="filter-nav">
+            <button class="filter-btn active" data-filter="all">전체 보기</button>
+            <button class="filter-btn" data-filter="restaurants">🍽️ 식당</button>
+            <button class="filter-btn" data-filter="cafes">☕ 카페</button>
+            <button class="share-btn" onclick="shareItinerary()">📤 공유하기</button>
+            <!-- <button class="download-btn" onclick="downloadPlan()">⬇️ 저장하기</button> -->
+        </nav>
+
+        <div class="main-content">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+
+            <div class="info-panel">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="restaurants">식당 (Restaurants)</button>
+                    <button class="tab-btn" data-tab="cafes">카페 (Cafes)</button>
+                    <button class="tab-btn" data-tab="route">추천 루트 (Route)</button>
+                </div>
+
+                <div id="restaurants-tab" class="tab-content active">
+                    <div id="restaurant-list" class="item-list"></div>
+                </div>
+
+                <div id="cafes-tab" class="tab-content">
+                    <div id="cafe-list" class="item-list"></div>
+                </div>
+
+                <div id="route-tab" class="tab-content">
+                    <div class="route-plan">
+                        <div id="route-content"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Created with ❤️ for a romantic getaway</p>
+        </footer>
+    </div>
+
+    <!-- Script to load dynamic data -->
+    <script>
+        function loadItinerary() {
+            const urlParams = new URLSearchParams(window.location.search);
+            // Default to seoul_feb_2026 if no plan specified (or handle error)
+            const planId = urlParams.get('plan') || 'seoul_feb_2026';
+
+            const script = document.createElement('script');
+            script.src = `itineraries/${planId}.js`;
+            script.onload = () => {
+                // After data is loaded, run app init
+                // We likely need to trigger app.js manually or ensure it runs after
+                const appScript = document.createElement('script');
+                appScript.src = 'app.js';
+                document.body.appendChild(appScript);
+            };
+            script.onerror = () => {
+                alert('플랜 데이터를 불러올 수 없습니다: ' + planId);
+            };
+            document.body.appendChild(script);
+        }
+
+        loadItinerary();
+    </script>
+</body>
+
+</html>
