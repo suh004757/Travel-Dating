@@ -1,110 +1,47 @@
-# Seoul Romantic Date Itinerary 💕
+# 💕 서울 로맨틱 데이트 (Seoul Romantic Date Itinerary)
 
-Interactive web guide for a romantic Seoul date (Feb 10-12, 2026) around Orakai Insadong Suites.
+2026년 2월 10일부터 12일까지, 오라카이 인사동 스위트를 거점으로 한 **한옥 및 뷰 중심의 데이트 코스** 웹 애플리케이션입니다.
 
-## Features
+## ✨ 프로젝트 특징
 
-- 🗺️ **Interactive Kakao Map** with restaurant and activity markers
-- 🍽️ **50+ Korean Restaurants** (luxury + casual, 4.0+ ratings)
-- 🏛️ **40+ Activities** with TripAdvisor ratings
-- 📅 **Day-by-day filtering** (Feb 10/11/12)
-- 🚶 **Route planning** with suggested timelines
-- 📱 **Mobile responsive** design
-- ⚠️ **Allergy-safe**: All recommendations exclude raw shellfish
+이 프로젝트는 연인과의 특별한 시간을 위해 **한국적인 정취, 아름다운 전망, 그리고 편안한 동선**을 최우선으로 고려하여 제작되었습니다.
 
-## Live Demo
+### 1. 엄선된 장소 (Curated Venues)
+이전의 방대한 리스트를 정리하여 가장 확실한 곳들만 남겼습니다.
+*   **🍽️ 식당 (6곳):** 미슐랭 맛집, 한옥 다이닝, 사찰 음식 등 (미쉬매쉬, 온6.5, 목멱산방 등)
+*   **☕ 카페 (8곳):** 한옥 뷰 루프탑, 전통 찻집, 랜턴 정원 등 (그린마일, 청수당, 어니언 등)
+*   **❌ 제외 기준:** 서양식 메뉴(파스타 등), 시끄러운 술집, 일반 프랜차이즈 제외
 
-Visit: `https://[your-username].github.io/seoul-date-itinerary/`
+### 2. 모바일 최적화 (Mobile Optimized)
+이동 중에 스마트폰으로 쉽게 확인할 수 있도록 기능을 개선했습니다.
+*   **🔗 네이버 지도 연동:** 모든 장소 링크는 모바일 전용 주소(`m.map.naver.com`)를 사용하여, 클릭 시 네이버 지도 앱이나 모바일 웹으로 정확하게 연결됩니다.
+*   **📱 반응형 디자인:** PC와 모바일 모두에서 깔끔하게 보이는 직관적인 UI를 제공합니다.
 
-## Setup for GitHub Pages
+### 3. 맞춤형 루트 (Custom Routes)
+단순한 나열이 아닌, 상황에 맞는 코스를 제안합니다.
+*   **📅 날짜별 2가지 옵션:**
+    *   **Option A (클래식/여유):** 한옥 산책, 뷰 감상 위주의 힐링 코스
+    *   **Option B (트렌디/힙):** 핫플레이스 카페와 미식 탐방 코스
 
-### 1. Get Kakao Maps API Key (Free)
+### 4. 사용자 편의성
+*   **🇰🇷 100% 한글화:** 모든 장소명, 설명, 카테고리를 한국어로 제공하여 검색과 이해가 쉽습니다.
+*   **🗺️ 지도 시각화:** 필터(식당/카페)에 따라 지도 위의 마커가 즉시 변경되어 위치를 직관적으로 파악할 수 있습니다.
 
-1. Visit [Kakao Developers](https://developers.kakao.com/)
-2. Sign up / Log in
-3. Create a new app
-4. Go to "Web Platform" settings
-5. Add your GitHub Pages URL: `https://[your-username].github.io`
-6. Copy your JavaScript API key
+## 🛠️ 기술 스택
+*   **Vanilla HTML/CSS/JS:** 별도의 빌드 과정 없이 `index.html` 파일만 열면 바로 실행되는 가벼운 구조입니다.
+*   **Leaflet.js:** 오픈소스 지도 라이브러리를 사용하여 커스텀 마커와 위치 정보를 시각화했습니다.
 
-### 2. Update index.html
+## 📂 파일 구조
+*   `index.html`: 메인 실행 파일 (UI 구조)
+*   `style.css`: 디자인 및 반응형 스타일
+*   `app.js`: 지도 렌더링, 필터링, UI 조작 로직
+*   `data.js`: 식당/카페 데이터 및 루트 정보 (JSON 형식)
 
-Replace `YOUR_KAKAO_API_KEY` in `index.html` line 8:
+## 🚀 사용 방법
+1. 데이트 당일, 스마트폰이나 태블릿에서 `index.html` 파일을 엽니다.
+2. 상단의 **'식당'** 또는 **'카페'** 탭을 눌러 리스트를 확인합니다.
+3. 마음에 드는 장소의 **'📍 네이버 지도 보기'** 링크를 클릭하여 길을 찾습니다.
+4. **'추천 루트'** 탭에서 그날의 기분에 맞는 코스(Option A/B)를 선택하여 움직입니다.
 
-```html
-<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_ACTUAL_KEY&libraries=services"></script>
-```
-
-### 3. Deploy to GitHub Pages
-
-```bash
-# Initialize git repository
-git init
-git add .
-git commit -m "Initial commit: Seoul date itinerary"
-
-# Create GitHub repository and push
-git remote add origin https://github.com/[your-username]/seoul-date-itinerary.git
-git branch -M main
-git push -u origin main
-
-# Enable GitHub Pages
-# Go to repository Settings > Pages
-# Source: Deploy from branch 'main' / folder 'root'
-```
-
-## Local Development
-
-Simply open `index.html` in a web browser. No build process required!
-
-## Project Structure
-
-```
-seoul-date-itinerary/
-├── index.html          # Main HTML structure
-├── style.css           # Romantic pink gradient styling
-├── data.js             # Restaurant & activity data with coordinates
-├── app.js              # Interactive map and filtering logic
-└── README.md           # This file
-```
-
-## Data Sources
-
-- Catchtable (Korean restaurant reservations)
-- Google Maps
-- TripAdvisor ratings
-
-## Customization
-
-### Add More Restaurants
-
-Edit `data.js` and add to the `restaurants` array:
-
-```javascript
-{
-    name: "Restaurant Name",
-    category: "Korean BBQ",
-    area: "Insadong",
-    distance: "5 min walk",
-    bestDay: "Feb 11",
-    description: "Why it's romantic...",
-    platform: "Catchtable",
-    link: "https://...",
-    rating: "⭐4.5/5",
-    lat: 37.5741,  // Latitude
-    lng: 126.9854, // Longitude
-    type: "restaurant"
-}
-```
-
-### Add More Activities
-
-Edit `data.js` and add to the `activities` array with similar structure.
-
-## License
-
-MIT License - Feel free to fork and customize for your own romantic trips!
-
-## Credits
-
-Created for a special Seoul getaway 🌸
+---
+*Created for a perfect romantic getaway in Seoul.*
