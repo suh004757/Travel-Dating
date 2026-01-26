@@ -9,7 +9,7 @@ const SUPABASE_CONFIG = {
 
 // Weather API Configuration (Optional - using OpenWeatherMap)
 const WEATHER_CONFIG = {
-    apiKey: '4f862a24be01f4d5f25e26f5a49dd3ee', // Get free key from openweathermap.org
+    apiKey: 'a4d5a99eaa36106e0691e3e0e7845dbb', // Get free key from openweathermap.org
     enabled: true // Set to false to disable weather features
 };
 
