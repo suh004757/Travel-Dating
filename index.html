@@ -455,10 +455,13 @@
         });
 
         // Search input
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            currentSearch = e.target.value.toLowerCase();
-            filterTrips();
-        });
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                currentSearch = e.target.value.toLowerCase();
+                filterTrips();
+            });
+        }
 
         function filterTrips() {
             const cards = document.querySelectorAll('.date-card:not(.add-new)');
