@@ -46,6 +46,136 @@
             font-style: italic;
         }
 
+        /* Create Plan Section */
+        .create-plan-section {
+            max-width: 700px;
+            margin: 0 auto 40px;
+            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.1);
+        }
+
+        .section-title {
+            color: #ff6b9d;
+            font-size: 1.5rem;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .plan-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95rem;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="date"] {
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #ff6b9d;
+            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+        }
+
+        .tag-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag-checkbox {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 15px;
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .tag-checkbox:hover {
+            background: #fff5f7;
+            border-color: #ff6b9d;
+        }
+
+        .tag-checkbox input[type="checkbox"] {
+            cursor: pointer;
+        }
+
+        .tag-checkbox input[type="checkbox"]:checked+span {
+            color: #ff6b9d;
+            font-weight: 600;
+        }
+
+        .create-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #ff6b9d, #c44569);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
+        }
+
+        /* Trip Card Tags */
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .card-tag {
+            padding: 4px 10px;
+            background: #ffe8f0;
+            color: #ff6b9d;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .date-list {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -153,6 +283,65 @@
             <p class="brand-note">보편적인 서비스는 너무 데이터가 많아서 만들게 된 우리의 여정.</p>
         </header>
 
+        <!-- Create New Plan Section -->
+        <div class="create-plan-section">
+            <h2 class="section-title">✨ 새로운 데이트 플랜 만들기</h2>
+            <form class="plan-form" id="planForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="planName">플랜 이름</label>
+                        <input type="text" id="planName" placeholder="예: 서울 봄나들이" required />
+                    </div>
+                    <div class="form-group">
+                        <label for="planDate">날짜</label>
+                        <input type="date" id="planDate" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="centerLocation">중심지 / 호텔</label>
+                    <input type="text" id="centerLocation" placeholder="예: 명동 롯데호텔, 강남역" required />
+                </div>
+                <div class="form-group">
+                    <label>감성 태그 선택 (다중 선택 가능)</label>
+                    <div class="tag-selector">
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="비오는날" />
+                            <span>#비오는날</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="첫데이트" />
+                            <span>#첫데이트</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="사진" />
+                            <span>#사진</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="조용한대화" />
+                            <span>#조용한대화</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="노을" />
+                            <span>#노을</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="야간데이트" />
+                            <span>#야간데이트</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="카페" />
+                            <span>#카페</span>
+                        </label>
+                        <label class="tag-checkbox">
+                            <input type="checkbox" value="디너" />
+                            <span>#디너</span>
+                        </label>
+                    </div>
+                </div>
+                <button type="submit" class="create-btn">💕 플랜 생성하기</button>
+            </form>
+        </div>
+
         <div class="date-list" id="dateList">
             <div class="loading">로딩 중...</div>
         </div>
@@ -212,6 +401,10 @@
                     <div class="card-date">${dateRange}</div>
                     <div class="card-title">${trip.title}</div>
                     <div class="card-desc">${trip.subtitle || ''}</div>
+                    <div class="card-tags">
+                        <span class="card-tag">#서울</span>
+                        <span class="card-tag">#로맨틱</span>
+                    </div>
                 </div>
             `;
 
@@ -221,7 +414,10 @@
         function createAddCard() {
             const card = document.createElement('div');
             card.className = 'date-card add-new';
-            card.onclick = () => alert('Phase 2에서 새 여행 추가 기능이 추가됩니다!');
+            card.onclick = () => {
+                document.getElementById('planForm').scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('planName').focus();
+            };
 
             card.innerHTML = `
                 <div class="card-content add-content">
@@ -231,6 +427,54 @@
             `;
 
             return card;
+        }
+
+        // Search & Filter Functionality (Frontend-only for now)
+        let currentFilter = 'all';
+        let currentSearch = '';
+
+        // Tag filter buttons
+        document.querySelectorAll('.tag-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active state
+                document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                currentFilter = btn.dataset.tag;
+                filterTrips();
+            });
+        });
+
+        // Search input
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            currentSearch = e.target.value.toLowerCase();
+            filterTrips();
+        });
+
+        function filterTrips() {
+            const cards = document.querySelectorAll('.date-card:not(.add-new)');
+
+            cards.forEach(card => {
+                const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+                const desc = card.querySelector('.card-desc')?.textContent.toLowerCase() || '';
+                const dateText = card.querySelector('.card-date')?.textContent.toLowerCase() || '';
+
+                // Search filter
+                const matchesSearch = currentSearch === '' ||
+                    title.includes(currentSearch) ||
+                    desc.includes(currentSearch) ||
+                    dateText.includes(currentSearch);
+
+                // Tag filter (for now, just show all if 'all' is selected)
+                // In Phase 2, this will check actual tags from database
+                const matchesTag = currentFilter === 'all';
+
+                if (matchesSearch && matchesTag) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
 
         // Load trips on page load
