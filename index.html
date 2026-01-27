@@ -366,16 +366,25 @@
                 container.innerHTML = '';
 
                 // Render trip cards
-                trips.forEach(trip => {
-                    const card = createTripCard(trip);
-                    container.appendChild(card);
-                });
+                if (trips && trips.length > 0) {
+                    trips.forEach(trip => {
+                        const card = createTripCard(trip);
+                        container.appendChild(card);
+                    });
+                } else {
+                    // Show empty state
+                    const emptyDiv = document.createElement('div');
+                    emptyDiv.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 40px; color: #999;';
+                    emptyDiv.innerHTML = '📭 아직 데이트 플랜이 없습니다.<br><small>아래 폼에서 새로운 플랜을 만들어보세요!</small>';
+                    container.appendChild(emptyDiv);
+                }
 
                 // Add "New Trip" placeholder
                 const addCard = createAddCard();
                 container.appendChild(addCard);
 
             } catch (error) {
+                console.error('Error loading trips:', error);
                 container.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #dc3545;">
                         ❌ 데이터를 불러올 수 없습니다.<br>
@@ -476,6 +485,12 @@
                 }
             });
         }
+
+        // Form submission handler
+        document.getElementById('planForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('🛠️ 기능 준비 중입니다!\n\nPhase 2 업데이트에서 플랜 생성 기능이 추가됩니다.');
+        });
 
         // Load trips on page load
         loadTrips();
