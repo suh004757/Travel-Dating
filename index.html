@@ -276,6 +276,9 @@
 </head>
 
 <body>
+    <!-- Auth Widget (Login/Logout) -->
+    <div id="auth-widget"></div>
+
     <div class="hub-container">
         <header class="hub-header">
             <h1>✨ 데이트, 정보가 아닌 이야기로 추천받다</h1>
@@ -348,6 +351,7 @@
     </div>
 
     <script src="config.js"></script>
+    <script src="components/auth.js"></script>
     <script>
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);

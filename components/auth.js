@@ -48,26 +48,47 @@ function renderAuthUI() {
     }
 }
 
+// Kakao Login using Supabase OAuth
+async function loginWithKakao() {
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithOAuth({
+            provider: 'kakao',
+            options: {
+                redirectTo: window.location.origin
+            }
+        });
+
+        if (error) throw error;
+
+        // User will be redirected to Kakao login page
+        // After successful login, they'll be redirected back to the app
+    } catch (error) {
+        console.error('Kakao login error:', error);
+        alert('카카오 로그인에 실패했습니다: ' + error.message);
+    }
+}
+
 function showLoginModal() {
     const modal = document.createElement('div');
     modal.id = 'login-modal';
     modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000;';
 
     modal.innerHTML = `
-        <div style="background: white; padding: 30px; border-radius: 15px; max-width: 400px; width: 90%; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-            <h2 style="margin: 0 0 20px 0; color: #ff6b9d;">🔐 로그인</h2>
-            <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">이메일 주소를 입력하시면 로그인 링크를 보내드립니다.</p>
-            <input type="email" id="login-email" placeholder="your-email@example.com" 
-                   style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 0.95rem; margin-bottom: 15px; box-sizing: border-box;">
-            <div style="display: flex; gap: 10px;">
-                <button onclick="sendMagicLink()" style="flex: 1; background: #ff6b9d; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.95rem;">
-                    매직 링크 전송
-                </button>
-                <button onclick="closeLoginModal()" style="flex: 1; background: #f0f0f0; color: #666; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 0.95rem;">
-                    취소
-                </button>
-            </div>
-            <div id="login-status" style="margin-top: 15px; font-size: 0.85rem;"></div>
+        <div style="background: white; padding: 40px; border-radius: 20px; max-width: 400px; width: 90%; box-shadow: 0 8px 30px rgba(0,0,0,0.15); text-align: center;">
+            <h2 style="margin: 0 0 10px 0; color: #ff6b9d; font-size: 1.8rem;">💕 DateScape</h2>
+            <p style="color: #999; font-size: 0.95rem; margin-bottom: 30px;">로그인하고 나만의 데이트 플랜을 만들어보세요</p>
+            
+            <!-- Kakao Login Button -->
+            <button onclick="loginWithKakao(); closeLoginModal();" style="width: 100%; background: #FEE500; color: #000000; border: none; padding: 16px; border-radius: 12px; cursor: pointer; font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 12px; box-sizing: border-box; transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(254,229,0,0.4)';" onmouseout="this.style.transform=''; this.style.boxShadow='';">
+                <svg width="22" height="22" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 0C4.02944 0 0 3.35786 0 7.5C0 10.0733 1.57056 12.3419 3.99 13.5856L3.06 17.0419C2.99056 17.3419 3.33 17.5733 3.59056 17.4056L7.68 14.8733C8.11056 14.9267 8.55 14.9533 9 14.9533C13.9706 14.9533 18 11.5956 18 7.5C18 3.35786 13.9706 0 9 0Z" fill="#000000"/>
+                </svg>
+                카카오로 3초만에 시작하기
+            </button>
+            
+            <button onclick="closeLoginModal()" style="margin-top: 20px; background: transparent; color: #999; border: none; padding: 10px; cursor: pointer; font-size: 0.9rem; text-decoration: underline;">
+                나중에 하기
+            </button>
         </div>
     `;
 
