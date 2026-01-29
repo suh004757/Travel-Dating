@@ -21,18 +21,22 @@ async function loadComments(placeId) {
         html += '<div style="font-size: 0.9rem; font-weight: 600; color: #666; margin-bottom: 10px;">💬 메모</div>';
 
         if (comments.length > 0) {
-            html += comments.map(c => `
+            html += comments.map(c => {
+                // Check if current user is the author of this comment
+                const isAuthor = canEdit && currentUser && (c.user_id === currentUser.id);
+
+                return `
                 <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 8px; font-size: 0.85rem; position: relative;">
-                    <div style="color: #333; padding-right: ${canEdit ? '30px' : '0'};">"${c.text}"</div>
+                    <div style="color: #333; padding-right: ${isAuthor ? '30px' : '0'};">"${c.text}"</div>
                     <div style="color: #999; font-size: 0.75rem; margin-top: 5px;">- ${c.author || '익명'}</div>
-                    ${canEdit ? `
+                    ${isAuthor ? `
                         <button onclick="deleteComment('${c.id}', '${placeId}')" 
-                                style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;">
+                                style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;" title="삭제">
                             ×
                         </button>
                     ` : ''}
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         if (canEdit) {
@@ -70,12 +74,22 @@ async function addComment(placeId) {
     if (!text) return;
 
     try {
+        // Get current user from Supabase Auth
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        if (!user) {
+            alert('로그인이 필요합니다.');
+            showLoginModal();
+            return;
+        }
+
         const { error } = await supabaseClient
             .from('comments')
             .insert({
                 place_id: placeId,
                 text: text,
-                author: currentUser?.email || '익명'
+                author: user.user_metadata?.full_name || user.email || '익명',
+                user_id: user.id  // Save user ID for ownership check
             });
 
         if (error) throw error;
@@ -96,18 +110,28 @@ async function deleteComment(commentId, placeId) {
     if (!confirm('이 메모를 삭제하시겠습니까?')) return;
 
     try {
+        // Get current user
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        if (!user) {
+            alert('로그인이 필요합니다.');
+            showLoginModal();
+            return;
+        }
+
+        // Delete will fail if user is not the owner (thanks to RLS policy)
         const { error } = await supabaseClient
             .from('comments')
             .delete()
-            .eq('id', commentId);
+            .eq('id', commentId)
+            .eq('user_id', user.id);  // Additional client-side check
 
         if (error) throw error;
 
         await loadComments(placeId);
     } catch (error) {
-        if (error.message.includes('row-level security')) {
-            alert('로그인이 필요합니다.');
-            showLoginModal();
+        if (error.message.includes('row-level security') || error.message.includes('0 rows')) {
+            alert('본인이 작성한 메모만 삭제할 수 있습니다.');
         } else {
             alert('삭제 실패: ' + error.message);
         }
