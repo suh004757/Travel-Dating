@@ -36,3 +36,4 @@ __pycache__/
 env/
 venv/
 docs/KAKAO_SUPABASE_CONFIG.md
+Data/daegu_daejeon_enhanced.md
