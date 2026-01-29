@@ -54,7 +54,7 @@ async function loginWithKakao() {
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'kakao',
             options: {
-                redirectTo: window.location.origin
+                redirectTo: window.location.href  // Redirect back to current page
             }
         });
 
