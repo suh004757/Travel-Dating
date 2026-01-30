@@ -1,0 +1,33 @@
+# Robots.txt - Bot Crawling Protection
+# Prevents bots from accessing sensitive configuration files
+
+User-agent: *
+
+# Block access to JavaScript configuration and components
+Disallow: /components/
+Disallow: /config.js
+Disallow: /app.js
+
+# Block access to data files
+Disallow: /itineraries/
+
+# Allow access to main pages
+Allow: /index.html
+Allow: /view.html
+Allow: /style.css
+
+# Block common bot patterns
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# Crawl delay for allowed bots (in seconds)
+Crawl-delay: 10

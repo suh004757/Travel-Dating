@@ -1,6 +1,14 @@
 // Authentication Component
 // Handles Magic Link login/logout with Supabase Auth
 
+// HTML Escape utility to prevent XSS attacks
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 let currentUser = null;
 
 async function initAuth() {
@@ -30,7 +38,7 @@ function renderAuthUI() {
         // Logged in: Show user email and logout button
         container.innerHTML = `
             <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px 15px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 0.85rem; color: #666;">👤 ${currentUser.email}</span>
+                <span style="font-size: 0.85rem; color: #666;">👤 ${escapeHtml(currentUser.email)}</span>
                 <button onclick="logout()" style="background: #ff6b9d; color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85rem;">
                     로그아웃
                 </button>
@@ -54,7 +62,8 @@ async function loginWithKakao() {
         const { data, error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'kakao',
             options: {
-                redirectTo: window.location.href  // Redirect back to current page
+                // Use fixed redirect URL to prevent open redirect attacks
+                redirectTo: window.location.origin + '/index.html'
             }
         });
 
@@ -64,7 +73,8 @@ async function loginWithKakao() {
         // After successful login, they'll be redirected back to the app
     } catch (error) {
         console.error('Kakao login error:', error);
-        alert('카카오 로그인에 실패했습니다: ' + error.message);
+        // Don't expose detailed error messages to users
+        alert('카카오 로그인에 실패했습니다. 잠시 후 다시 시도해주세요.');
     }
 }
 
