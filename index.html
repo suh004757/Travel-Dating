@@ -293,7 +293,41 @@
             <h1>✨ 데이트, 정보가 아닌 이야기로 추천받다</h1>
             <p class="subtext">단순 장소가 아니라 우리만의 데이트 여정을 AI와 함께 스토리로 만들어갑니다.</p>
             <p class="brand-note">우리만의 세계일주 이야기.</p>
+
+            <!-- D-Day Widget -->
+            <div id="d-day-widget"
+                style="margin-top: 25px; display: inline-block; background: white; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);">
+                <span style="color: #666; font-size: 0.95rem; font-weight: 500;">우리 함께한 지</span>
+                <span id="d-day-count"
+                    style="color: #ff6b9d; font-size: 1.2rem; font-weight: bold; margin-left: 8px;">D+1</span>
+                <span style="color: #ff6b9d;">❤️</span>
+            </div>
         </header>
+
+        <script>
+            // 💕 D-DAY 설정 (여기 날짜를 수정하세요!)
+            const START_DATE = '2026-01-20'; // 예: 사귄 날짜 (YYYY-MM-DD)
+
+            function updateDDay() {
+                const start = new Date(START_DATE);
+                const today = new Date();
+
+                // 시간 구성 요소 무시하고 날짜만 비교
+                start.setHours(0, 0, 0, 0);
+                today.setHours(0, 0, 0, 0);
+
+                const diffTime = Math.abs(today - start);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // 1일차부터 시작
+
+                const dDayElement = document.getElementById('d-day-count');
+                if (dDayElement) {
+                    dDayElement.textContent = `D+${diffDays}`;
+                }
+            }
+
+            // 페이지 로드 시 실행
+            document.addEventListener('DOMContentLoaded', updateDDay);
+        </script>
 
         <!-- Create New Plan Section -->
         <div class="create-plan-section">
