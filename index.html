@@ -473,8 +473,15 @@
             const card = document.createElement('div');
             card.className = 'date-card add-new';
             card.onclick = () => {
-                document.getElementById('planForm').scrollIntoView({ behavior: 'smooth' });
-                document.getElementById('planName').focus();
+                const planForm = document.getElementById('planForm');
+                const planName = document.getElementById('planName');
+
+                if (planForm && planName) {
+                    planForm.scrollIntoView({ behavior: 'smooth' });
+                    planName.focus();
+                } else {
+                    alert('🛠️ 플랜 생성 기능은 준비 중입니다!');
+                }
             };
 
             card.innerHTML = `
@@ -538,11 +545,14 @@
             });
         }
 
-        // Form submission handler
-        document.getElementById('planForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            alert('🛠️ 기능 준비 중입니다!\n\nPhase 2 업데이트에서 플랜 생성 기능이 추가됩니다.');
-        });
+        // Form submission handler (only if form exists)
+        const planForm = document.getElementById('planForm');
+        if (planForm) {
+            planForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                alert('🛠️ 기능 준비 중입니다!\\n\\nPhase 2 업데이트에서 플랜 생성 기능이 추가됩니다.');
+            });
+        }
 
         // Load trips on page load
         loadTrips();
