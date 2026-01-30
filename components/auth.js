@@ -47,7 +47,7 @@ function renderAuthUI() {
         // Logged in: Show user email and logout button
         container.innerHTML = `
             <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px 15px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 0.85rem; color: #666;">👤 ${escapeHtml(currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email)}</span>
+                <span style="font-size: 0.85rem; color: #666;">👤 ${escapeHtml(currentUser.email)}</span>
                 <button onclick="logout()" style="background: #ff6b9d; color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85rem;">
                     로그아웃
                 </button>
