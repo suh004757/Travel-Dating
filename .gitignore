@@ -37,3 +37,9 @@ env/
 venv/
 docs/KAKAO_SUPABASE_CONFIG.md
 Data/daegu_daejeon_enhanced.md
+assets/datescape_logo_128px.png
+assets/datescape_logo_alt.png
+assets/datescape_logo_kakao.png
+assets/datescape_logo.png
+tools/insert_daegu_daejeon.sql
+tools/comment_auth_rls.sql
