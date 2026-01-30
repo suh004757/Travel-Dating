@@ -23,6 +23,15 @@ async function initAuth() {
         currentUser = session?.user || null;
         renderAuthUI();
 
+        // Show welcome modal for first-time login
+        if (event === 'SIGNED_IN') {
+            const isFirstLogin = !localStorage.getItem('has_logged_in_before');
+            if (isFirstLogin) {
+                showWelcomeModal(session?.user);
+                localStorage.setItem('has_logged_in_before', 'true');
+            }
+        }
+
         // Reload components when auth state changes
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
             window.location.reload();
@@ -109,6 +118,52 @@ function showLoginModal() {
 function closeLoginModal() {
     const modal = document.getElementById('login-modal');
     if (modal) modal.remove();
+}
+
+function showWelcomeModal(user) {
+    const modal = document.createElement('div');
+    modal.id = 'welcome-modal';
+    modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; animation: fadeIn 0.3s ease;';
+
+    const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || '회원';
+
+    modal.innerHTML = `
+        <style>
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(30px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        </style>
+        <div style="background: white; padding: 50px 40px; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; animation: slideUp 0.4s ease;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🎉</div>
+            <h2 style="margin: 0 0 15px 0; color: #ff6b9d; font-size: 2rem;">환영합니다!</h2>
+            <p style="color: #666; font-size: 1.1rem; margin-bottom: 10px; line-height: 1.6;">
+                <strong style="color: #333;">${escapeHtml(userName)}</strong>님,<br>
+                DateScape에 오신 것을 환영합니다! 💕
+            </p>
+            <p style="color: #999; font-size: 0.95rem; margin-bottom: 30px; line-height: 1.6;">
+                이제 나만의 특별한 데이트 플랜을 만들고<br>
+                메모와 할 일을 관리할 수 있습니다.
+            </p>
+            <button onclick="closeWelcomeModal()" style="background: linear-gradient(135deg, #ff6b9d, #c44569); color: white; border: none; padding: 15px 40px; border-radius: 30px; cursor: pointer; font-size: 1.1rem; font-weight: 600; box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3); transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+                시작하기 ✨
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+function closeWelcomeModal() {
+    const modal = document.getElementById('welcome-modal');
+    if (modal) {
+        modal.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => modal.remove(), 300);
+    }
 }
 
 async function sendMagicLink() {
