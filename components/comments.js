@@ -2,7 +2,7 @@
 // Inline comments for specific places
 // Auth required for add/delete
 
-async function loadComments(placeId) {
+async function loadPlaceComments(placeId) {
     const container = document.getElementById(`comments-${placeId}`);
     if (!container) return;
 
@@ -30,7 +30,7 @@ async function loadComments(placeId) {
                     <div style="color: #333; padding-right: ${isAuthor ? '30px' : '0'};">"${c.text}"</div>
                     <div style="color: #999; font-size: 0.75rem; margin-top: 5px;">- ${c.author || '익명'}</div>
                     ${isAuthor ? `
-                        <button onclick="deleteComment('${c.id}', '${placeId}')" 
+                        <button onclick="removeComment('${c.id}', '${placeId}')" 
                                 style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;" title="삭제">
                             ×
                         </button>
@@ -44,7 +44,7 @@ async function loadComments(placeId) {
                 <div style="display: flex; gap: 5px; margin-top: 10px;">
                     <input type="text" id="comment-input-${placeId}" placeholder="메모 추가..." 
                            style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 5px; font-size: 0.85rem;">
-                    <button onclick="addComment('${placeId}')" 
+                    <button onclick="createComment('${placeId}')" 
                             style="background: #ff6b9d; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 0.85rem;">
                         추가
                     </button>
@@ -67,7 +67,7 @@ async function loadComments(placeId) {
     }
 }
 
-async function addComment(placeId) {
+async function createComment(placeId) {
     const input = document.getElementById(`comment-input-${placeId}`);
     const text = input.value.trim();
 
@@ -95,7 +95,7 @@ async function addComment(placeId) {
         if (error) throw error;
 
         input.value = '';
-        await loadComments(placeId);
+        await loadPlaceComments(placeId);
     } catch (error) {
         if (error.message.includes('row-level security')) {
             alert('로그인이 필요합니다.');
@@ -106,7 +106,7 @@ async function addComment(placeId) {
     }
 }
 
-async function deleteComment(commentId, placeId) {
+async function removeComment(commentId, placeId) {
     if (!confirm('이 메모를 삭제하시겠습니까?')) return;
 
     try {
@@ -128,7 +128,7 @@ async function deleteComment(commentId, placeId) {
 
         if (error) throw error;
 
-        await loadComments(placeId);
+        await loadPlaceComments(placeId);
     } catch (error) {
         if (error.message.includes('row-level security') || error.message.includes('0 rows')) {
             alert('본인이 작성한 메모만 삭제할 수 있습니다.');

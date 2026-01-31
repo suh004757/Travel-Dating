@@ -36,10 +36,17 @@ __pycache__/
 env/
 venv/
 docs/KAKAO_SUPABASE_CONFIG.md
-Data/daegu_daejeon_enhanced.md
+
+# Local data files (not to be committed)
+Data/
+tools/*.sql
+tools/*.py
+tools/*.md
+tools/*.json
+tools/*.html
+
+# Assets (logos)
 assets/datescape_logo_128px.png
 assets/datescape_logo_alt.png
 assets/datescape_logo_kakao.png
 assets/datescape_logo.png
-tools/insert_daegu_daejeon.sql
-tools/comment_auth_rls.sql

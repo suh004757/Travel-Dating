@@ -12,7 +12,7 @@ supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
 // Main initialization
 async function init() {
     const urlParams = new URLSearchParams(window.location.search);
-    const slug = urlParams.get('plan') || 'seoul_feb_2026';
+    const slug = urlParams.get('plan') || 'daejeon_feb_2026';
 
     try {
         await loadItinerary(slug);
@@ -191,8 +191,8 @@ function createPlaceCard(place) {
     `;
 
     // Load comments if component exists
-    if (window.loadComments) {
-        setTimeout(() => loadComments(place.id), 100);
+    if (window.loadPlaceComments) {
+        setTimeout(() => loadPlaceComments(place.id), 100);
     }
 
     return card;
