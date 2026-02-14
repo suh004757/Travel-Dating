@@ -1,23 +1,14 @@
-<!DOCTYPE html>
-<html lang="ko">
+﻿<!DOCTYPE html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Content Security Policy to prevent XSS attacks -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; 
-                   script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; 
-                   style-src 'self' 'unsafe-inline'; 
-                   img-src 'self' data: https:; 
-                   connect-src 'self' https://*.supabase.co https://api.openweathermap.org; 
-                   font-src 'self' data:; 
-                   frame-src 'none'; 
-                   object-src 'none';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openweathermap.org; font-src 'self' data:; frame-src 'none'; object-src 'none';">
     <title>DateScape - AI-Powered Date Planner</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* Specific styles for the Hub page */
         .hub-container {
             max-width: 800px;
             margin: 0 auto;
@@ -55,7 +46,6 @@
             font-style: italic;
         }
 
-        /* Create Plan Section */
         .create-plan-section {
             max-width: 700px;
             margin: 0 auto 40px;
@@ -135,10 +125,6 @@
             border-color: #ff6b9d;
         }
 
-        .tag-checkbox input[type="checkbox"] {
-            cursor: pointer;
-        }
-
         .tag-checkbox input[type="checkbox"]:checked+span {
             color: #ff6b9d;
             font-weight: 600;
@@ -162,7 +148,6 @@
             box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
         }
 
-        /* Trip Card Tags */
         .card-tags {
             display: flex;
             flex-wrap: wrap;
@@ -177,12 +162,6 @@
             border-radius: 12px;
             font-size: 0.8rem;
             font-weight: 600;
-        }
-
-        @media (max-width: 600px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
         }
 
         .date-list {
@@ -201,6 +180,11 @@
             text-decoration: none;
             color: inherit;
             border: 1px solid #eee;
+        }
+
+        .date-card:focus-visible {
+            outline: 3px solid rgba(255, 107, 157, 0.35);
+            outline-offset: 2px;
         }
 
         .date-card:hover {
@@ -280,117 +264,93 @@
             .hub-header h1 {
                 font-size: 1.8rem;
             }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 
 <body>
-    <!-- Auth Widget (Login/Logout) -->
     <div id="auth-widget"></div>
 
     <div class="hub-container">
         <header class="hub-header">
-            <h1>✨ 데이트, 정보가 아닌 이야기로 추천받다</h1>
+            <h1>Date ideas as stories, not just data</h1>
             <p class="subtext">JOON & YOUNGAH'S WORLD TOUR</p>
-            <p class="brand-note">우리만의 데이트 여정을 AI와 함께 스토리로 만들어갑니다.</p>
+            <p class="brand-note">Build your own date journey with AI-powered storytelling.</p>
 
-            <!-- D-Day Widget -->
-            <div id="d-day-widget"
-                style="margin-top: 25px; display: inline-block; background: white; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);">
-                <span style="color: #666; font-size: 0.95rem; font-weight: 500;">우리 함께한 지</span>
-                <span id="d-day-count"
-                    style="color: #ff6b9d; font-size: 1.2rem; font-weight: bold; margin-left: 8px;">D+1</span>
-                <span style="color: #ff6b9d;">❤️</span>
+            <div id="d-day-widget" style="margin-top: 25px; display: inline-block; background: white; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);">
+                <span style="color: #666; font-size: 0.95rem; font-weight: 500;">Days together</span>
+                <span id="d-day-count" style="color: #ff6b9d; font-size: 1.2rem; font-weight: bold; margin-left: 8px;">D+1</span>
+                <span style="color: #ff6b9d;">heart</span>
             </div>
         </header>
 
         <script>
-            // 💕 D-DAY 설정 (여기 날짜를 수정하세요!)
-            const START_DATE = '2026-01-20'; // 예: 사귄 날짜 (YYYY-MM-DD)
+            const START_DATE = '2026-01-20';
 
             function updateDDay() {
                 const start = new Date(START_DATE);
                 const today = new Date();
 
-                // 시간 구성 요소 무시하고 날짜만 비교
                 start.setHours(0, 0, 0, 0);
                 today.setHours(0, 0, 0, 0);
 
-                const diffTime = Math.abs(today - start);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // 1일차부터 시작
+                const diffTime = today - start;
+                const dayMs = 1000 * 60 * 60 * 24;
+                const diffDays = Math.floor(diffTime / dayMs) + 1;
 
                 const dDayElement = document.getElementById('d-day-count');
-                if (dDayElement) {
+                if (!dDayElement) return;
+
+                if (diffDays >= 1) {
                     dDayElement.textContent = `D+${diffDays}`;
+                } else {
+                    dDayElement.textContent = `D-${Math.ceil(Math.abs(diffTime) / dayMs)}`;
                 }
             }
 
-            // 페이지 로드 시 실행
             document.addEventListener('DOMContentLoaded', updateDDay);
         </script>
 
-
         <div class="create-plan-section">
-            <h2 class="section-title">✨ 새로운 데이트 플랜 만들기</h2>
+            <h2 class="section-title">Create a new date plan</h2>
             <form class="plan-form" id="planForm">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="planName">플랜 이름</label>
-                        <input type="text" id="planName" placeholder="예: 서울 봄나들이" required />
+                        <label for="planName">Plan Name</label>
+                        <input type="text" id="planName" placeholder="Example: Seoul Spring Walk" required>
                     </div>
                     <div class="form-group">
-                        <label for="planDate">날짜</label>
-                        <input type="date" id="planDate" required />
+                        <label for="planDate">Date</label>
+                        <input type="date" id="planDate" required>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="centerLocation">중심지 / 호텔</label>
-                    <input type="text" id="centerLocation" placeholder="예: 명동 롯데호텔, 강남역" required />
+                    <label for="centerLocation">Center Area / Hotel</label>
+                    <input type="text" id="centerLocation" placeholder="Example: Myeongdong, Gangnam Station" required>
                 </div>
                 <div class="form-group">
-                    <label>감성 태그 선택 (다중 선택 가능)</label>
+                    <label>Mood Tags (multi-select)</label>
                     <div class="tag-selector">
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="비오는날" />
-                            <span>#비오는날</span>
-                        </label>
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="첫데이트" />
-                            <span>#첫데이트</span>
-                        </label>
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="사진" />
-                            <span>#사진</span>
-                        </label>
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="조용한대화" />
-                            <span>#조용한대화</span>
-                        </label>
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="노을" />
-                            <span>#노을</span>
-                        </label>
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="야간데이트" />
-                            <span>#야간데이트</span>
-                        </label>
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="카페" />
-                            <span>#카페</span>
-                        </label>
-                        <label class="tag-checkbox">
-                            <input type="checkbox" value="디너" />
-                            <span>#디너</span>
-                        </label>
+                        <label class="tag-checkbox"><input type="checkbox" value="rainy"><span>#rainy-day</span></label>
+                        <label class="tag-checkbox"><input type="checkbox" value="first-date"><span>#first-date</span></label>
+                        <label class="tag-checkbox"><input type="checkbox" value="photos"><span>#photos</span></label>
+                        <label class="tag-checkbox"><input type="checkbox" value="quiet-talk"><span>#quiet-talk</span></label>
+                        <label class="tag-checkbox"><input type="checkbox" value="sunset"><span>#sunset</span></label>
+                        <label class="tag-checkbox"><input type="checkbox" value="night-date"><span>#night-date</span></label>
+                        <label class="tag-checkbox"><input type="checkbox" value="cafe"><span>#cafe</span></label>
+                        <label class="tag-checkbox"><input type="checkbox" value="dinner"><span>#dinner</span></label>
                     </div>
                 </div>
-                <button type="submit" class="create-btn">💕 플랜 생성하기</button>
+                <button type="submit" class="create-btn">Create Plan</button>
             </form>
         </div>
 
-
         <div class="date-list" id="dateList">
-            <div class="loading">로딩 중...</div>
+            <div class="loading">Loading...</div>
         </div>
     </div>
 
@@ -399,6 +359,15 @@
     <script>
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
         async function loadTrips() {
             const container = document.getElementById('dateList');
@@ -413,54 +382,51 @@
 
                 container.innerHTML = '';
 
-                // Render trip cards
                 if (trips && trips.length > 0) {
-                    trips.forEach(trip => {
-                        const card = createTripCard(trip);
-                        container.appendChild(card);
-                    });
+                    trips.forEach(trip => container.appendChild(createTripCard(trip)));
                 } else {
-                    // Show empty state
                     const emptyDiv = document.createElement('div');
                     emptyDiv.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 40px; color: #999;';
-                    emptyDiv.innerHTML = '📭 아직 데이트 플랜이 없습니다.<br><small>아래 폼에서 새로운 플랜을 만들어보세요!</small>';
+                    emptyDiv.innerHTML = 'No date plans yet.<br><small>Create your first plan from the form above.</small>';
                     container.appendChild(emptyDiv);
                 }
 
-                // Add "New Trip" placeholder
-                const addCard = createAddCard();
-                container.appendChild(addCard);
-
+                container.appendChild(createAddCard());
             } catch (error) {
                 console.error('Error loading trips:', error);
                 container.innerHTML = `
                     <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #dc3545;">
-                        ❌ 데이터를 불러올 수 없습니다.<br>
+                        Failed to load data.<br>
                         <small>${error.message}</small><br>
-                        <small>config.js 설정을 확인하세요.</small>
+                        <small>Please check your config.js settings.</small>
                     </div>
                 `;
             }
         }
 
         function createTripCard(trip) {
+            const safeSlug = encodeURIComponent(trip.slug || '');
+            const safeEmoji = escapeHtml(trip.emoji || 'D');
+            const safeTitle = escapeHtml(trip.title || '');
+            const safeSubtitle = escapeHtml(trip.subtitle || '');
+
             const card = document.createElement('a');
-            card.href = `view.html?plan=${trip.slug}`;
+            card.href = `view.html?plan=${safeSlug}`;
             card.className = 'date-card';
 
-            const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('ko-KR') : '';
-            const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('ko-KR') : '';
-            const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : '날짜 미정';
+            const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US') : '';
+            const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('en-US') : '';
+            const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : 'Date TBD';
 
             card.innerHTML = `
-                <div class="card-image">${trip.emoji || '💕'}</div>
+                <div class="card-image">${safeEmoji}</div>
                 <div class="card-content">
                     <div class="card-date">${dateRange}</div>
-                    <div class="card-title">${trip.title}</div>
-                    <div class="card-desc">${trip.subtitle || ''}</div>
+                    <div class="card-title">${safeTitle}</div>
+                    <div class="card-desc">${safeSubtitle}</div>
                     <div class="card-tags">
-                        <span class="card-tag">#대전</span>
-                        <span class="card-tag">#로맨틱</span>
+                        <span class="card-tag">#romantic</span>
+                        <span class="card-tag">#city-date</span>
                     </div>
                 </div>
             `;
@@ -469,9 +435,12 @@
         }
 
         function createAddCard() {
-            const card = document.createElement('div');
+            const card = document.createElement('button');
             card.className = 'date-card add-new';
-            card.onclick = () => {
+            card.type = 'button';
+            card.setAttribute('aria-label', 'add-new-date-plan');
+
+            card.addEventListener('click', () => {
                 const planForm = document.getElementById('planForm');
                 const planName = document.getElementById('planName');
 
@@ -479,81 +448,28 @@
                     planForm.scrollIntoView({ behavior: 'smooth' });
                     planName.focus();
                 } else {
-                    alert('🛠️ 플랜 생성 기능은 준비 중입니다!');
+                    alert('Plan creation UI is not ready yet.');
                 }
-            };
+            });
 
             card.innerHTML = `
                 <div class="card-content add-content">
                     <span class="plus-icon">+</span>
-                    <div>새로운 데이트 추가하기</div>
+                    <div>Add a new date</div>
                 </div>
             `;
 
             return card;
         }
 
-        // Search & Filter Functionality (Frontend-only for now)
-        let currentFilter = 'all';
-        let currentSearch = '';
-
-        // Tag filter buttons
-        document.querySelectorAll('.tag-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Update active state
-                document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                currentFilter = btn.dataset.tag;
-                filterTrips();
-            });
-        });
-
-        // Search input
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                currentSearch = e.target.value.toLowerCase();
-                filterTrips();
-            });
-        }
-
-        function filterTrips() {
-            const cards = document.querySelectorAll('.date-card:not(.add-new)');
-
-            cards.forEach(card => {
-                const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
-                const desc = card.querySelector('.card-desc')?.textContent.toLowerCase() || '';
-                const dateText = card.querySelector('.card-date')?.textContent.toLowerCase() || '';
-
-                // Search filter
-                const matchesSearch = currentSearch === '' ||
-                    title.includes(currentSearch) ||
-                    desc.includes(currentSearch) ||
-                    dateText.includes(currentSearch);
-
-                // Tag filter (for now, just show all if 'all' is selected)
-                // In Phase 2, this will check actual tags from database
-                const matchesTag = currentFilter === 'all';
-
-                if (matchesSearch && matchesTag) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
-        }
-
-        // Form submission handler (only if form exists)
         const planForm = document.getElementById('planForm');
         if (planForm) {
             planForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                alert('🛠️ 기능 준비 중입니다!\\n\\nPhase 2 업데이트에서 플랜 생성 기능이 추가됩니다.');
+                alert('This feature is in progress. Plan creation will be added in Phase 2.');
             });
         }
 
-        // Load trips on page load
         loadTrips();
     </script>
 </body>
