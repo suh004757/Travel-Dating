@@ -1323,11 +1323,11 @@ footer p {
     z-index: 15;
     grid-column: 1 / -1;
     align-self: start;
-    margin-bottom: 2px;
+    margin-bottom: 4px;
     border: 1px solid #f0d6df;
-    border-radius: 12px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.96);
-    padding: 4px;
+    padding: 3px;
     box-shadow: var(--shadow);
     backdrop-filter: blur(2px);
 }
@@ -1337,12 +1337,14 @@ footer p {
     border: 0;
     background: transparent;
     color: var(--text-dark);
-    padding: 10px 12px;
-    border-radius: 10px;
+    padding: 8px 4px;
+    border-radius: 8px;
     font-weight: 600;
-    font-size: 0.86rem;
+    font-size: 0.74rem;
+    line-height: 1.1;
     cursor: pointer;
-    min-height: 44px;
+    min-height: 40px;
+    white-space: nowrap;
 }
 
 .mobile-workspace-tab.is-active {
@@ -1436,8 +1438,9 @@ footer p {
 @media (max-width: 768px) {
     .mobile-workspace-tabs {
         display: flex;
-        gap: 4px;
+        gap: 3px;
         margin-bottom: 0;
+        padding: 2px;
     }
 
     .mobile-workspace-tab {
@@ -1596,6 +1599,17 @@ footer p {
 }
 
 @media (max-width: 420px) {
+    .mobile-workspace-tabs {
+        border-radius: 8px;
+        padding: 2px;
+    }
+
+    .mobile-workspace-tab {
+        min-height: 38px;
+        padding: 7px 3px;
+        font-size: 0.71rem;
+    }
+
     .review-workspace {
         gap: 12px;
     }
