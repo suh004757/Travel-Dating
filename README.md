@@ -12,13 +12,13 @@ DateScape is a story-driven date planner.
 - `index.html`: hub page
 - `view.html`: itinerary viewer
 - `app.js`: viewer logic
-- `components/`: auth, weather, todos, comments
+- `components/`: auth, weather, todos, reviews
 - `itineraries/`: local data backup
 - `docs/`: setup and migration docs
 
 ## Setup
 1. Create a Supabase project.
-2. Run SQL files in `docs/setup_database.sql` and `docs/phase2_schema.sql`.
+2. Run SQL files in `docs/setup_database.sql`, `docs/phase2_schema.sql`, `docs/reviews_schema.sql`, and `docs/update_rls_policies.sql`.
 3. Fill API values in `config.js`.
 4. Open `index.html` and verify loading.
 

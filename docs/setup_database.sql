@@ -40,16 +40,6 @@ CREATE TABLE IF NOT EXISTS routes (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS comments (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    place_id UUID REFERENCES places(id) ON DELETE CASCADE,
-    text TEXT NOT NULL,
-    author TEXT,
-    user_id UUID,
-    rating INT CHECK (rating BETWEEN 1 AND 5),
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
 CREATE TABLE IF NOT EXISTS todos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,

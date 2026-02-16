@@ -8,13 +8,13 @@
 - Create trips with date range and base location.
 - Add places (restaurant, cafe, activity).
 - Add route options with time-based activities.
-- Add comments and optional ratings.
+- Add private reviews/notes and optional ratings.
 - Add shared todo list.
 
 ## Auth and Access
 - Public read access.
 - Authenticated write access.
-- Comments are private: each user can only read their own comments.
+- Reviews are private: each user can only read their own reviews.
 - Use Supabase RLS policies.
 
 ## UI Scope
