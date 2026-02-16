@@ -63,8 +63,8 @@ function bindAuthSync() {
     });
 }
 
-window.addEventListener('reviews:stats-updated', () => {
-    setupPlaceOverview(currentPlaces);
+window.addEventListener('reviews:stats-updated', (event) => {
+    setupPlaceOverview(currentPlaces, event?.detail || {});
     applyPlaceTypeFilter(currentPlaceTypeFilter);
 });
 
@@ -230,26 +230,58 @@ function createPlaceCard(place) {
     return card;
 }
 
-function setupPlaceOverview(places = []) {
+function setupPlaceOverview(places = [], stats = {}) {
     const totalEl = document.getElementById('overview-total-places');
+    const totalReviewsEl = document.getElementById('overview-total-reviews');
     const restaurantEl = document.getElementById('overview-restaurant-count');
     const cafeEl = document.getElementById('overview-cafe-count');
     const reviewedEl = document.getElementById('overview-reviewed-places');
+    const unreviewedEl = document.getElementById('overview-unreviewed-places');
+    const avgRatingEl = document.getElementById('overview-avg-rating');
+    const latestReviewEl = document.getElementById('overview-latest-review');
+    const avgReviewsPerPlaceEl = document.getElementById('overview-avg-reviews-per-place');
 
     const placeList = Array.isArray(places) ? places : [];
-    const reviewCounts = window.__placeReviewCounts || {};
+    const reviewCounts = Object.assign({}, window.__placeReviewCounts || {}, stats.reviewCounts || {});
+    const reviewedPlaceIds = new Set(stats.reviewedPlaceIds || []);
+    const totalReviews = Number.isFinite(stats.totalReviews)
+        ? stats.totalReviews
+        : Object.values(reviewCounts).reduce((acc, count) => acc + (Number(count) || 0), 0);
+    const parsedAverageRating = Number.parseFloat(stats.averageRating);
+    const avgRating = Number.isFinite(parsedAverageRating)
+        ? parsedAverageRating
+        : null;
+    const latestReviewDate = stats.lastReviewAt ? new Date(stats.lastReviewAt) : null;
+
+    const reviewedPlaces = placeList.filter((place) => {
+        const placeId = place?.id != null ? String(place.id) : '';
+        if (!placeId) return false;
+        if (reviewedPlaceIds.size > 0) {
+            return reviewedPlaceIds.has(placeId);
+        }
+        return (reviewCounts[placeId] || 0) > 0;
+    }).length;
+    const unreviewedPlaces = Math.max(placeList.length - reviewedPlaces, 0);
+    const avgReviewsPerPlace = placeList.length > 0
+        ? (totalReviews / placeList.length).toFixed(1)
+        : '0.0';
 
     const restaurants = placeList.filter(place => (place.type || '').toLowerCase() === 'restaurant').length;
     const cafes = placeList.filter(place => (place.type || '').toLowerCase() === 'cafe').length;
-    const reviewedPlaces = placeList.filter((place) => {
-        const placeId = place?.id != null ? String(place.id) : '';
-        return placeId && (reviewCounts[placeId] || 0) > 0;
-    }).length;
 
     if (totalEl) totalEl.textContent = String(placeList.length);
+    if (totalReviewsEl) totalReviewsEl.textContent = String(totalReviews);
     if (restaurantEl) restaurantEl.textContent = String(restaurants);
     if (cafeEl) cafeEl.textContent = String(cafes);
     if (reviewedEl) reviewedEl.textContent = String(reviewedPlaces);
+    if (unreviewedEl) unreviewedEl.textContent = String(unreviewedPlaces);
+    if (avgRatingEl) avgRatingEl.textContent = avgRating != null ? avgRating.toFixed(1) : '-';
+    if (latestReviewEl) {
+        latestReviewEl.textContent = latestReviewDate && !Number.isNaN(latestReviewDate.getTime())
+            ? latestReviewDate.toLocaleDateString('ko-KR')
+            : '-';
+    }
+    if (avgReviewsPerPlaceEl) avgReviewsPerPlaceEl.textContent = avgReviewsPerPlace;
 }
 
 function bindOverviewFilterActions() {

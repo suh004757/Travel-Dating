@@ -133,6 +133,12 @@ async function loadPlaceReviewsForPlaces(places) {
 
     const placeReviews = Object.fromEntries(placeList.map((placeId) => [placeId, []]));
     const photoMap = Object.create(null);
+    const reviewStats = {
+        totalReviews: 0,
+        totalRating: 0,
+        ratedReviewCount: 0,
+        lastReviewAt: null
+    };
 
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
@@ -150,6 +156,18 @@ async function loadPlaceReviewsForPlaces(places) {
                 placeReviews[review.place_id] = [];
             }
             placeReviews[review.place_id].push(review);
+
+            reviewStats.totalReviews += 1;
+            if (Number(review.rating)) {
+                reviewStats.totalRating += Number(review.rating);
+                reviewStats.ratedReviewCount += 1;
+            }
+            if (review.created_at) {
+                const created = new Date(review.created_at);
+                if (!reviewStats.lastReviewAt || created > reviewStats.lastReviewAt) {
+                    reviewStats.lastReviewAt = created;
+                }
+            }
         });
 
         const reviewIds = safeReviews.map(review => review.id);
@@ -172,6 +190,13 @@ async function loadPlaceReviewsForPlaces(places) {
 
         const reviewCounts = Object.fromEntries(placeList.map((placeId) => [placeId, (placeReviews[placeId] || []).length]));
         window.__placeReviewCounts = Object.assign({}, reviewCounts, window.__placeReviewCounts || {});
+        const averageRating = reviewStats.ratedReviewCount > 0
+            ? reviewStats.totalRating / reviewStats.ratedReviewCount
+            : 0;
+
+        const reviewedPlaceIds = Object.entries(placeReviews)
+            .filter(([, list]) => (list || []).length > 0)
+            .map(([placeId]) => placeId);
 
         placeList.forEach((placeId) => {
             const container = document.getElementById(`reviews-${placeId}`);
@@ -183,7 +208,13 @@ async function loadPlaceReviewsForPlaces(places) {
         });
 
         window.dispatchEvent(new CustomEvent('reviews:stats-updated', {
-            detail: { reviewCounts }
+            detail: {
+                reviewCounts,
+                totalReviews: reviewStats.totalReviews,
+                averageRating,
+                reviewedPlaceIds,
+                lastReviewAt: reviewStats.lastReviewAt ? reviewStats.lastReviewAt.toISOString() : null
+            }
         }));
     } catch (error) {
         console.error('Error loading reviews in bulk:', error);
@@ -195,8 +226,11 @@ async function loadPlaceReviewsForPlaces(places) {
             }
         });
 
-        window.__placeReviewCounts = Object.fromEntries(placeList.map((placeId) => [placeId, 0]));
-        window.dispatchEvent(new CustomEvent('reviews:stats-updated'));
+        const reviewCounts = Object.fromEntries(placeList.map((placeId) => [placeId, 0]));
+        window.__placeReviewCounts = reviewCounts;
+        window.dispatchEvent(new CustomEvent('reviews:stats-updated', {
+            detail: { reviewCounts }
+        }));
     }
 }
 
@@ -418,11 +452,17 @@ async function submitReview(event, placeId) {
         }
 
         closeReviewModal();
-        await loadPlaceReviews(placeId);
-        window.__placeReviewCounts = Object.assign({}, window.__placeReviewCounts || {}, { [placeId]: 1 });
-        window.dispatchEvent(new CustomEvent('reviews:stats-updated', {
-            detail: { reviewCounts: { [placeId]: 1 } }
-        }));
+
+        const cards = Array.from(document.querySelectorAll('.place-card')).map((card) => card?.dataset?.placeId).filter(Boolean);
+        const placeIdsForRefresh = cards.length > 0
+            ? cards.map((id) => ({ id }))
+            : [{ id: placeId }];
+
+        if (typeof loadPlaceReviewsForPlaces === 'function' && placeIdsForRefresh.length > 0) {
+            await loadPlaceReviewsForPlaces(placeIdsForRefresh);
+        } else if (typeof loadPlaceReviews === 'function') {
+            await loadPlaceReviews(placeId);
+        }
     } catch (error) {
         console.error('Error saving review:', error);
         alert('Failed to save review: ' + error.message);
