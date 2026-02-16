@@ -70,12 +70,11 @@ function setMobileWorkspaceMode(mode) {
     if (!workspace) return;
 
     const target = mode || (workspace.dataset.defaultMobileMode || 'map');
-    const validModes = ['map', 'overview', 'places'];
+    const validModes = ['map', 'places'];
     const nextMode = validModes.includes(target) ? target : 'map';
 
     const sections = {
         map: workspace.querySelector('[data-mobile-section="map"]'),
-        overview: workspace.querySelector('[data-mobile-section="overview"]'),
         places: workspace.querySelector('[data-mobile-section="places"]')
     };
 
@@ -336,6 +335,9 @@ function setupPlaceOverview(places = [], stats = {}) {
     const avgRatingEl = document.getElementById('overview-avg-rating');
     const latestReviewEl = document.getElementById('overview-latest-review');
     const avgReviewsPerPlaceEl = document.getElementById('overview-avg-reviews-per-place');
+    const mobileTotalPlacesEl = document.getElementById('mobile-overview-total-places');
+    const mobileTotalReviewsEl = document.getElementById('mobile-overview-total-reviews');
+    const mobileAvgRatingEl = document.getElementById('mobile-overview-avg-rating');
 
     const placeList = Array.isArray(places) ? places : [];
     const reviewCounts = Object.assign({}, window.__placeReviewCounts || {}, stats.reviewCounts || {});
@@ -378,19 +380,23 @@ function setupPlaceOverview(places = [], stats = {}) {
             : '-';
     }
     if (avgReviewsPerPlaceEl) avgReviewsPerPlaceEl.textContent = avgReviewsPerPlace;
+    if (mobileTotalPlacesEl) mobileTotalPlacesEl.textContent = String(placeList.length);
+    if (mobileTotalReviewsEl) mobileTotalReviewsEl.textContent = String(totalReviews);
+    if (mobileAvgRatingEl) mobileAvgRatingEl.textContent = avgRating != null ? avgRating.toFixed(1) : '-';
 }
 
 function bindOverviewFilterActions() {
-    const container = document.querySelector('.overview-filter-actions');
-    if (!container || window.__overviewFilterActionsBound) return;
+    const containers = document.querySelectorAll('.overview-filter-actions, .mobile-place-filters');
+    if (containers.length === 0 || window.__overviewFilterActionsBound) return;
     window.__overviewFilterActionsBound = true;
 
-    container.addEventListener('click', (event) => {
-        const button = event.target.closest('.overview-filter-btn');
-        if (!button) return;
-
-        const filter = button.dataset.filter || 'all';
-        applyPlaceTypeFilter(filter);
+    containers.forEach((container) => {
+        container.addEventListener('click', (event) => {
+            const button = event.target.closest('.overview-filter-btn');
+            if (!button) return;
+            const filter = button.dataset.filter || 'all';
+            applyPlaceTypeFilter(filter);
+        });
     });
 }
 

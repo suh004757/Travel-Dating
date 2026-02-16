@@ -32,7 +32,6 @@
         <div class="review-workspace">
             <div class="mobile-workspace-tabs" role="tablist" aria-label="Review page section tabs">
                 <button type="button" id="mobile-tab-map" role="tab" class="mobile-workspace-tab is-active" aria-selected="true" aria-controls="mobile-panel-map" data-mobile-view="map">Map</button>
-                <button type="button" id="mobile-tab-overview" role="tab" class="mobile-workspace-tab" aria-selected="false" aria-controls="mobile-panel-overview" data-mobile-view="overview">Overview</button>
                 <button type="button" id="mobile-tab-places" role="tab" class="mobile-workspace-tab" aria-selected="false" aria-controls="mobile-panel-places" data-mobile-view="places">Places</button>
             </div>
 
@@ -42,8 +41,8 @@
                 </div>
             </div>
 
-            <aside class="overview-panel" id="mobile-panel-overview" role="tabpanel" aria-labelledby="mobile-tab-overview" aria-label="Trip overview" data-mobile-section="overview">
-                <div class="section-heading overview-title">Trip Overview</div>
+            <aside class="overview-panel" id="mobile-panel-overview" aria-label="Trip overview" data-mobile-section="overview">
+                <div class="section-heading overview-title" id="overview-title-heading">Trip Overview</div>
                 <div id="overview-stats" class="overview-stats">
                     <div class="overview-card">
                         <p class="overview-label">Total Places</p>
@@ -102,6 +101,25 @@
                 <div class="places-header">
                     <h2 class="section-heading">Places We Visited</h2>
                     <button id="add-place-btn" class="add-place-btn" style="display:none;" onclick="showAddPlaceModal()">+ Add Place</button>
+                </div>
+                <div class="mobile-overview-strip" aria-label="Trip quick summary">
+                    <div class="mobile-overview-strip-card">
+                        <p class="mobile-overview-strip-label">Places</p>
+                        <p class="mobile-overview-strip-value" id="mobile-overview-total-places">0</p>
+                    </div>
+                    <div class="mobile-overview-strip-card">
+                        <p class="mobile-overview-strip-label">Reviews</p>
+                        <p class="mobile-overview-strip-value" id="mobile-overview-total-reviews">0</p>
+                    </div>
+                    <div class="mobile-overview-strip-card">
+                        <p class="mobile-overview-strip-label">Avg Rating</p>
+                        <p class="mobile-overview-strip-value" id="mobile-overview-avg-rating">-</p>
+                    </div>
+                </div>
+                <div class="mobile-place-filters">
+                    <button class="overview-filter-btn is-active" type="button" data-filter="all">All</button>
+                    <button class="overview-filter-btn" type="button" data-filter="restaurant">Restaurant</button>
+                    <button class="overview-filter-btn" type="button" data-filter="cafe">Cafe</button>
                 </div>
                 <div id="places-list" class="places-list">
                     <div class="loading">Loading places...</div>

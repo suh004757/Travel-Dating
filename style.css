@@ -1410,6 +1410,11 @@ footer p {
     padding: 18px;
 }
 
+.mobile-overview-strip,
+.mobile-place-filters {
+    display: none;
+}
+
 @media (max-width: 1024px) {
     .review-workspace {
         grid-template-columns: 1fr;
@@ -1436,6 +1441,64 @@ footer p {
 }
 
 @media (max-width: 768px) {
+    .review-workspace {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "map"
+            "places";
+        gap: 12px;
+    }
+
+    .mobile-overview-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin: 6px 0 10px;
+    }
+
+    .mobile-overview-strip-card {
+        background: var(--bg-color);
+        border: 1px solid #f5cde0;
+        border-radius: 10px;
+        padding: 8px 10px;
+        text-align: center;
+    }
+
+    .mobile-overview-strip-label {
+        font-size: 0.68rem;
+        color: var(--text-light);
+        margin-bottom: 4px;
+    }
+
+    .mobile-overview-strip-value {
+        font-size: 1rem;
+        color: var(--primary-color);
+        font-weight: 700;
+    }
+
+    .mobile-place-filters {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        margin: 0 0 10px;
+        padding: 0 0 4px;
+    }
+
+    .mobile-place-filters::-webkit-scrollbar {
+        display: none;
+    }
+
+    .mobile-place-filters .overview-filter-btn {
+        flex: 1;
+        min-width: 80px;
+        padding: 8px 10px;
+    }
+
+    .overview-panel {
+        display: none;
+    }
+
     .mobile-workspace-tabs {
         display: flex;
         gap: 3px;
