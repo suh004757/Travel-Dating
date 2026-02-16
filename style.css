@@ -752,3 +752,413 @@ footer p {
     border-color: var(--secondary-color);
     box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
 }
+
+/* ===== View Page: Places & Reviews ===== */
+
+.back-bar {
+    padding: 10px;
+    background: var(--bg-color);
+    border-bottom: 1px solid #ffe8f0;
+}
+
+.back-link {
+    text-decoration: none;
+    color: var(--primary-color);
+    font-weight: bold;
+}
+
+.map-section {
+    margin-bottom: 30px;
+}
+
+.places-section {
+    margin-bottom: 30px;
+}
+
+.places-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-heading {
+    color: var(--text-dark);
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+.add-place-btn {
+    padding: 10px 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-place-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+}
+
+.places-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.places-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-light);
+}
+
+/* Place Card */
+.place-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid #f0f0f0;
+}
+
+.place-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.place-name {
+    font-size: 1.2rem;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.place-category {
+    display: inline-block;
+    padding: 3px 10px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.place-area {
+    color: var(--text-light);
+    font-size: 0.85rem;
+    margin-bottom: 6px;
+}
+
+.place-description {
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
+.place-map-link {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--primary-color);
+    color: white;
+    text-decoration: none;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-bottom: 12px;
+}
+
+.place-map-link:hover {
+    background: var(--secondary-color);
+}
+
+/* Reviews Section */
+.reviews-container {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.reviews-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.reviews-header {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 4px;
+}
+
+.reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reviews-empty {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    padding: 10px 0;
+}
+
+.reviews-loading {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.reviews-error {
+    font-size: 0.85rem;
+    color: #dc3545;
+}
+
+/* Review Card */
+.review-card {
+    background: var(--bg-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.review-card.review-partner {
+    border-left-color: var(--accent-color);
+}
+
+.review-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.review-author {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+}
+
+.review-date {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-left: auto;
+}
+
+.review-text {
+    font-size: 0.9rem;
+    color: var(--text-dark);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+/* Star Rating */
+.star-rating {
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.star-rating .star {
+    color: #ddd;
+}
+
+.star-rating .star.filled {
+    color: #ffc107;
+}
+
+/* Star Picker */
+.star-picker {
+    display: flex;
+    gap: 6px;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.star-pick {
+    color: #ddd;
+    transition: color 0.15s;
+}
+
+.star-pick:hover,
+.star-pick.active {
+    color: #ffc107;
+}
+
+/* Review Photos */
+.review-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.review-photo-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.review-photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.review-photo-item img:hover {
+    transform: scale(1.05);
+}
+
+.photo-delete-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(220, 53, 69, 0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Review Buttons */
+.review-write-btn,
+.review-edit-btn {
+    padding: 8px 18px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+.review-write-btn:hover,
+.review-edit-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-1px);
+}
+
+.review-login-prompt {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    margin-top: 8px;
+}
+
+.review-login-prompt a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+/* Review Modal */
+.review-modal-content {
+    max-width: 550px;
+}
+
+/* Photo Upload */
+.photo-upload-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+.existing-photo {
+    position: relative;
+    width: 70px;
+    height: 70px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.existing-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-remove-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(220, 53, 69, 0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.photo-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border: 2px dashed var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.photo-upload-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.photo-preview-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.photo-preview-item {
+    width: 70px;
+    text-align: center;
+}
+
+.photo-preview-item img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.photo-name {
+    font-size: 0.6rem;
+    color: var(--text-light);
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.photo-size {
+    font-size: 0.6rem;
+    color: #28a745;
+    display: block;
+}

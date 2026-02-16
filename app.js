@@ -1,8 +1,9 @@
-﻿// Global variables
+// DateScape - Date Record Viewer
+// Loads a date record (trip) with places and reviews
+
 let map;
 let markers = [];
 let currentTrip = null;
-let currentFilter = 'all';
 let supabaseClient;
 
 function escapeHtml(value) {
@@ -24,17 +25,24 @@ async function init() {
     const slug = urlParams.get('plan') || 'daejeon_feb_2026';
 
     try {
-        await loadItinerary(slug);
-        setupFilters();
-        setupTabs();
-        setupActions();
+        await loadDateRecord(slug);
+        showAddPlaceButton();
     } catch (error) {
-        showError('Failed to load itinerary: ' + error.message);
+        showError('Failed to load date record: ' + error.message);
     }
 }
 
-// Load complete itinerary from Supabase
-async function loadItinerary(slug) {
+// Show "Add Place" button only for logged-in users
+async function showAddPlaceButton() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const btn = document.getElementById('add-place-btn');
+    if (btn && user) {
+        btn.style.display = 'inline-block';
+    }
+}
+
+// Load date record from Supabase
+async function loadDateRecord(slug) {
     const { data: trip, error: tripError } = await supabaseClient
         .from('trips')
         .select('*')
@@ -44,39 +52,31 @@ async function loadItinerary(slug) {
     if (tripError) throw tripError;
     currentTrip = trip;
 
+    // Update header
     document.getElementById('page-title').textContent = `${trip.emoji || ''} ${trip.title || ''}`.trim();
     document.getElementById('page-subtitle').textContent = trip.subtitle || '';
 
+    const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('ko-KR') : '';
+    const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('ko-KR') : '';
+    const datesEl = document.getElementById('page-dates');
+    if (datesEl && startDate) {
+        datesEl.textContent = endDate ? `${startDate} ~ ${endDate}` : startDate;
+    }
+
+    // Load places
     const { data: places, error: placesError } = await supabaseClient
         .from('places')
         .select('*')
-        .eq('trip_id', trip.id);
+        .eq('trip_id', trip.id)
+        .order('created_at', { ascending: true });
 
     if (placesError) throw placesError;
 
-    const restaurants = places.filter(p => p.type === 'restaurant');
-    const cafes = places.filter(p => p.type === 'cafe');
+    // Initialize map
+    initMap(trip.base_location, places || []);
 
-    const { data: routes, error: routesError } = await supabaseClient
-        .from('routes')
-        .select('*')
-        .eq('trip_id', trip.id)
-        .order('day_key');
-
-    if (routesError) throw routesError;
-
-    initMap(trip.base_location, [...restaurants, ...cafes]);
-    renderRestaurants(restaurants);
-    renderCafes(cafes);
-    renderRoutePlan(routes);
-
-    if (window.loadWeather && WEATHER_CONFIG.enabled) {
-        loadWeather(trip);
-    }
-
-    if (window.loadTodos) {
-        loadTodos(trip.id);
-    }
+    // Render places list
+    renderPlaces(places || []);
 }
 
 function initMap(baseLocation, places) {
@@ -89,196 +89,208 @@ function initMap(baseLocation, places) {
         maxZoom: 19
     }).addTo(map);
 
+    // Base location marker
     const hotelIcon = L.divIcon({
-        html: `<div style="background:#ff6b9d;color:white;padding:8px 12px;border-radius:20px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3);white-space:nowrap;">Hotel: ${escapeHtml(baseLocation.name)}</div>`,
+        html: `<div style="background:#ff6b9d;color:white;padding:6px 10px;border-radius:15px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.8rem;">${escapeHtml(baseLocation.name)}</div>`,
         className: 'custom-marker',
-        iconSize: [220, 40],
-        iconAnchor: [110, 40]
+        iconSize: [200, 30],
+        iconAnchor: [100, 30]
     });
 
     L.marker([baseLocation.lat, baseLocation.lng], { icon: hotelIcon })
         .addTo(map)
-        .bindPopup(`<b>${escapeHtml(baseLocation.name)}</b><br>${escapeHtml(baseLocation.address)}`);
+        .bindPopup(`<b>${escapeHtml(baseLocation.name)}</b><br>${escapeHtml(baseLocation.address || '')}`);
 
-    addAllMarkers(places);
-}
-
-function addAllMarkers(places) {
-    if (!map) return;
-
-    markers.forEach(marker => marker.remove());
-    markers = [];
-
+    // Place markers
     places.forEach(place => {
-        if (currentFilter === 'restaurants' && place.type !== 'restaurant') return;
-        if (currentFilter === 'cafes' && place.type !== 'cafe') return;
+        if (!place.lat || !place.lng) return;
 
         const color = place.type === 'restaurant' ? '#ff6b9d' : '#8b4513';
-        const prefix = place.type === 'restaurant' ? 'R' : 'C';
 
         const icon = L.divIcon({
-            html: `<div style="background:${color};color:white;padding:6px 10px;border-radius:15px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.8rem;">${prefix}: ${escapeHtml(place.name)}</div>`,
+            html: `<div style="background:${color};color:white;padding:5px 8px;border-radius:12px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.75rem;">${escapeHtml(place.name)}</div>`,
             className: 'custom-marker',
-            iconSize: [220, 30],
-            iconAnchor: [110, 30]
+            iconSize: [200, 26],
+            iconAnchor: [100, 26]
         });
 
         const marker = L.marker([place.lat, place.lng], { icon })
             .addTo(map)
-            .bindPopup(`<b>${escapeHtml(place.name)}</b><br>${escapeHtml(place.category)}<br>${escapeHtml(place.description)}`);
+            .bindPopup(`<b>${escapeHtml(place.name)}</b><br>${escapeHtml(place.category || '')}`);
 
         markers.push(marker);
     });
+
+    // Fit bounds to show all markers
+    if (places.length > 0) {
+        const allPoints = [
+            [baseLocation.lat, baseLocation.lng],
+            ...places.filter(p => p.lat && p.lng).map(p => [p.lat, p.lng])
+        ];
+        if (allPoints.length > 1) {
+            map.fitBounds(allPoints, { padding: [30, 30] });
+        }
+    }
 }
 
-function renderRestaurants(restaurants) {
-    const container = document.getElementById('restaurant-list');
+function renderPlaces(places) {
+    const container = document.getElementById('places-list');
     if (!container) return;
 
     container.innerHTML = '';
-    if (restaurants.length === 0) {
-        container.innerHTML = '<p style="padding:20px;text-align:center">No restaurant data found.</p>';
+
+    if (places.length === 0) {
+        container.innerHTML = '<div class="places-empty">No places recorded yet. Add the first one!</div>';
         return;
     }
 
-    restaurants.forEach(place => container.appendChild(createPlaceCard(place)));
-}
-
-function renderCafes(cafes) {
-    const container = document.getElementById('cafe-list');
-    if (!container) return;
-
-    container.innerHTML = '';
-    if (cafes.length === 0) {
-        container.innerHTML = '<p style="padding:20px;text-align:center">No cafe data found.</p>';
-        return;
-    }
-
-    cafes.forEach(place => container.appendChild(createPlaceCard(place)));
+    places.forEach(place => {
+        container.appendChild(createPlaceCard(place));
+    });
 }
 
 function createPlaceCard(place) {
+    const card = document.createElement('div');
+    card.className = 'place-card';
+
     const safeName = escapeHtml(place.name);
     const safeCategory = escapeHtml(place.category);
     const safeArea = escapeHtml(place.area);
-    const safeDistance = escapeHtml(place.distance);
     const safeDescription = escapeHtml(place.description);
     const safeLink = escapeHtml(place.link);
 
-    const card = document.createElement('div');
-    card.className = 'item-card';
     card.innerHTML = `
-        <div class="item-header">
-            <h3>${safeName}</h3>
-            <span class="category">${safeCategory}</span>
+        <div class="place-card-header">
+            <h3 class="place-name">${safeName}</h3>
+            ${safeCategory ? `<span class="place-category">${safeCategory}</span>` : ''}
         </div>
-        <div class="details">
-            <span>Area: ${safeArea}</span>
-            <span>Distance: ${safeDistance}</span>
+        ${safeArea ? `<div class="place-area">${safeArea}</div>` : ''}
+        ${safeDescription ? `<div class="place-description">${safeDescription}</div>` : ''}
+        ${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="place-map-link">View on Map</a>` : ''}
+        <div class="reviews-container" id="reviews-${place.id}">
+            <div class="reviews-loading">Loading reviews...</div>
         </div>
-        <div class="description">${safeDescription}</div>
-        <div class="links">
-            <a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="map-link">Open map page</a>
-        </div>
-        <div class="comments-section" id="comments-${place.id}"></div>
     `;
 
-    if (window.loadPlaceComments) {
-        setTimeout(() => loadPlaceComments(place.id), 100);
-    }
+    // Load reviews after card is in DOM
+    setTimeout(() => {
+        if (window.loadPlaceReviews) {
+            loadPlaceReviews(place.id);
+        }
+    }, 100);
 
     return card;
 }
 
-function renderRoutePlan(routes) {
-    const container = document.getElementById('route-content');
-    if (!container) return;
+// Add Place Modal
+function showAddPlaceModal() {
+    const modal = document.createElement('div');
+    modal.id = 'add-place-modal';
+    modal.className = 'modal show';
 
-    container.innerHTML = '';
-    if (routes.length === 0) {
-        container.innerHTML = '<p style="padding:20px;text-align:center">No route data found.</p>';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close" onclick="closeAddPlaceModal()">&times;</span>
+            <h2>Add a Place</h2>
+            <form id="addPlaceForm" onsubmit="submitNewPlace(event)">
+                <label>Name *</label>
+                <input type="text" id="new-place-name" required placeholder="e.g. Cafe Onion">
+
+                <label>Category</label>
+                <input type="text" id="new-place-category" placeholder="e.g. Bakery, Korean BBQ">
+
+                <label>Type</label>
+                <select id="new-place-type">
+                    <option value="restaurant">Restaurant</option>
+                    <option value="cafe">Cafe</option>
+                </select>
+
+                <label>Area</label>
+                <input type="text" id="new-place-area" placeholder="e.g. Anguk-dong">
+
+                <label>Description</label>
+                <textarea id="new-place-desc" rows="2" placeholder="Short description..."></textarea>
+
+                <label>Map Link (Naver/Kakao/Google)</label>
+                <input type="url" id="new-place-link" placeholder="https://...">
+
+                <label>Latitude</label>
+                <input type="number" id="new-place-lat" step="any" placeholder="37.5741">
+
+                <label>Longitude</label>
+                <input type="number" id="new-place-lng" step="any" placeholder="126.9854">
+
+                <div class="modal-buttons">
+                    <button type="submit" class="btn-primary">Add</button>
+                    <button type="button" class="btn-secondary" onclick="closeAddPlaceModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+}
+
+function closeAddPlaceModal() {
+    const modal = document.getElementById('add-place-modal');
+    if (modal) modal.remove();
+}
+
+async function submitNewPlace(event) {
+    event.preventDefault();
+
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        showLoginModal();
         return;
     }
 
-    routes.forEach((route, index) => {
-        const section = document.createElement('details');
-        section.className = 'day-section';
-        section.open = index === 0;
-
-        const optionsHTML = route.options.map(option => {
-            const activitiesHTML = option.activities.map(activity => `
-                <div class="route-item">
-                    <span class="time">${escapeHtml(activity.time)}</span>
-                    <span class="activity-name">${escapeHtml(activity.name)}</span>
-                    <span class="activity-desc">${escapeHtml(activity.description)}</span>
-                </div>
-            `).join('');
-
-            return `
-                <div class="route-option">
-                    <h4>${escapeHtml(option.name)}</h4>
-                    <p class="option-desc">${escapeHtml(option.description)}</p>
-                    <div class="timeline">${activitiesHTML}</div>
-                </div>
-            `;
-        }).join('');
-
-        section.innerHTML = `
-            <summary class="day-title">${escapeHtml(route.title)}</summary>
-            <div class="options-container">${optionsHTML}</div>
-        `;
-
-        container.appendChild(section);
-    });
-}
-
-function setupFilters() {
-    const buttons = document.querySelectorAll('.filter-btn');
-
-    buttons.forEach(button => {
-        button.addEventListener('click', async () => {
-            buttons.forEach(b => b.classList.remove('active'));
-            button.classList.add('active');
-
-            currentFilter = button.getAttribute('data-filter');
-
-            const { data: places } = await supabaseClient
-                .from('places')
-                .select('*')
-                .eq('trip_id', currentTrip.id);
-
-            addAllMarkers(places || []);
-        });
-    });
-}
-
-function setupTabs() {
-    const buttons = document.querySelectorAll('.tab-btn');
-
-    buttons.forEach(button => {
-        button.addEventListener('click', () => {
-            buttons.forEach(b => b.classList.remove('active'));
-            button.classList.add('active');
-
-            const target = button.getAttribute('data-tab');
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.getElementById(`${target}-tab`).classList.add('active');
-        });
-    });
-}
-
-function setupActions() {
-    const shareButton = document.getElementById('share-itinerary-btn');
-    if (shareButton) {
-        shareButton.addEventListener('click', shareItinerary);
+    if (!currentTrip) {
+        alert('No trip loaded.');
+        return;
     }
-}
 
-function shareItinerary() {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-        alert('Link copied to clipboard.');
-    });
+    const name = document.getElementById('new-place-name').value.trim();
+    const category = document.getElementById('new-place-category').value.trim();
+    const type = document.getElementById('new-place-type').value;
+    const area = document.getElementById('new-place-area').value.trim();
+    const description = document.getElementById('new-place-desc').value.trim();
+    const link = document.getElementById('new-place-link').value.trim();
+    const lat = parseFloat(document.getElementById('new-place-lat').value) || null;
+    const lng = parseFloat(document.getElementById('new-place-lng').value) || null;
+
+    if (!name) {
+        alert('Please enter a place name.');
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from('places')
+            .insert({
+                trip_id: currentTrip.id,
+                name,
+                category: category || null,
+                type,
+                area: area || null,
+                description: description || null,
+                link: link || null,
+                lat,
+                lng
+            });
+
+        if (error) throw error;
+
+        closeAddPlaceModal();
+
+        // Reload the page to show the new place
+        const slug = new URLSearchParams(window.location.search).get('plan') || 'daejeon_feb_2026';
+        await loadDateRecord(slug);
+        showAddPlaceButton();
+    } catch (error) {
+        console.error('Error adding place:', error);
+        alert('Failed to add place: ' + error.message);
+    }
 }
 
 function showError(message) {
@@ -288,7 +300,7 @@ function showError(message) {
     container.innerHTML = `
         <div style="text-align: center; padding: 100px 20px; color: #dc3545;">
             <h2>Error</h2>
-            <p>${message}</p>
+            <p>${escapeHtml(message)}</p>
             <a href="index.html" style="color: #ff6b9d;">Return to Home</a>
         </div>
     `;

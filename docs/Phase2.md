@@ -14,6 +14,7 @@
 ## Auth and Access
 - Public read access.
 - Authenticated write access.
+- Comments are private: each user can only read their own comments.
 - Use Supabase RLS policies.
 
 ## UI Scope

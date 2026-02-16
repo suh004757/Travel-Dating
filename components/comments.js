@@ -16,22 +16,28 @@ async function loadPlaceComments(placeId) {
     if (!container) return;
 
     try {
-        const { data: comments, error } = await supabaseClient
-            .from('comments')
-            .select('*')
-            .eq('place_id', placeId)
-            .order('created_at', { ascending: true });
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const canEdit = !!user;
+        let comments = [];
 
-        if (error) throw error;
+        if (user) {
+            const { data, error } = await supabaseClient
+                .from('comments')
+                .select('*')
+                .eq('place_id', placeId)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: true });
 
-        const canEdit = window.isAuthenticated && isAuthenticated();
+            if (error) throw error;
+            comments = data || [];
+        }
 
         let html = '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0;">';
-        html += '<div style="font-size: 0.9rem; font-weight: 600; color: #666; margin-bottom: 10px;">Notes</div>';
+        html += '<div style="font-size: 0.9rem; font-weight: 600; color: #666; margin-bottom: 4px;">Private notes</div>';
+        html += '<div style="font-size: 0.75rem; color: #999; margin-bottom: 10px;">Only visible to you.</div>';
 
         if (comments.length > 0) {
             html += comments.map(c => {
-                const isAuthor = canEdit && currentUser && c.user_id === currentUser.id;
                 const safeText = escapeHtml(c.text);
                 const safeAuthor = escapeHtml(c.author || 'Anonymous');
                 const safeCommentId = escapeHtml(c.id);
@@ -39,14 +45,14 @@ async function loadPlaceComments(placeId) {
 
                 return `
                     <div style="background: #f8f9fa; padding: 10px; border-radius: 5px; margin-bottom: 8px; font-size: 0.85rem; position: relative;">
-                        <div style="color: #333; padding-right: ${isAuthor ? '30px' : '0'};">"${safeText}"</div>
+                        <div style="color: #333; padding-right: 30px;">"${safeText}"</div>
                         <div style="color: #999; font-size: 0.75rem; margin-top: 5px;">- ${safeAuthor}</div>
-                        ${isAuthor ? `
-                            <button onclick="removeComment('${safeCommentId}', '${safePlaceId}')" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;" title="Delete">x</button>
-                        ` : ''}
+                        <button onclick="removeComment('${safeCommentId}', '${safePlaceId}')" style="position: absolute; top: 8px; right: 8px; background: none; border: none; color: #dc3545; cursor: pointer; font-size: 1.2rem; padding: 0; line-height: 1;" title="Delete">x</button>
                     </div>
                 `;
             }).join('');
+        } else if (canEdit) {
+            html += '<div style="font-size: 0.8rem; color: #999; margin-bottom: 8px;">No notes yet for this place.</div>';
         }
 
         if (canEdit) {

@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openweathermap.org; font-src 'self' data:; frame-src 'none'; object-src 'none';">
-    <title>DateScape - AI-Powered Date Planner</title>
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src 'none'; object-src 'none';">
+    <title>DateScape - Our Date Memories</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -13,13 +14,13 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
         }
 
         .hub-header {
             text-align: center;
             margin-bottom: 40px;
-            padding: 40px 0;
+            padding: 40px 20px;
             background: linear-gradient(135deg, #fff5f7 0%, #fff 100%);
             border-radius: 20px;
             box-shadow: 0 4px 15px rgba(255, 107, 157, 0.1);
@@ -28,226 +29,126 @@
         .hub-header h1 {
             color: #ff6b9d;
             margin: 0;
-            font-size: 2rem;
+            font-size: 1.8rem;
             line-height: 1.4;
         }
 
         .hub-header .subtext {
             color: #666;
-            margin-top: 15px;
-            font-size: 1.1rem;
-            line-height: 1.6;
-        }
-
-        .hub-header .brand-note {
-            color: #999;
-            margin-top: 10px;
-            font-size: 0.95rem;
-            font-style: italic;
-        }
-
-        .create-plan-section {
-            max-width: 700px;
-            margin: 0 auto 40px;
-            padding: 30px;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.1);
-        }
-
-        .section-title {
-            color: #ff6b9d;
-            font-size: 1.5rem;
-            margin-bottom: 25px;
-            text-align: center;
-        }
-
-        .plan-form {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .form-group label {
-            font-weight: 600;
-            color: #333;
-            font-size: 0.95rem;
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="date"] {
-            padding: 12px 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
+            margin-top: 12px;
             font-size: 1rem;
-            transition: all 0.3s ease;
         }
 
-        .form-group input:focus {
-            outline: none;
-            border-color: #ff6b9d;
-            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
+        .d-day-badge {
+            margin-top: 20px;
+            display: inline-block;
+            background: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
         }
 
-        .tag-selector {
+        .d-day-label { color: #666; font-size: 0.9rem; }
+        .d-day-count { color: #ff6b9d; font-size: 1.2rem; font-weight: bold; margin-left: 8px; }
+
+        .dates-toolbar {
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .tag-checkbox {
-            display: inline-flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            padding: 8px 15px;
-            background: #f5f5f5;
-            border: 2px solid #ddd;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            user-select: none;
+            margin-bottom: 25px;
         }
 
-        .tag-checkbox:hover {
-            background: #fff5f7;
-            border-color: #ff6b9d;
+        .dates-toolbar h2 {
+            color: #333;
+            font-size: 1.3rem;
+            margin: 0;
         }
 
-        .tag-checkbox input[type="checkbox"]:checked+span {
-            color: #ff6b9d;
-            font-weight: 600;
-        }
-
-        .create-btn {
-            padding: 15px 30px;
+        .add-date-btn {
+            padding: 10px 24px;
             background: linear-gradient(135deg, #ff6b9d, #c44569);
             color: white;
             border: none;
-            border-radius: 30px;
-            font-size: 1.1rem;
+            border-radius: 25px;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            display: none;
         }
 
-        .create-btn:hover {
+        .add-date-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.3);
-        }
-
-        .card-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
-        }
-
-        .card-tag {
-            padding: 4px 10px;
-            background: #ffe8f0;
-            color: #ff6b9d;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
+            box-shadow: 0 6px 18px rgba(255, 107, 157, 0.3);
         }
 
         .date-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
         .date-card {
+            display: flex;
             background: white;
-            border-radius: 15px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
             text-decoration: none;
             color: inherit;
-            border: 1px solid #eee;
-        }
-
-        .date-card:focus-visible {
-            outline: 3px solid rgba(255, 107, 157, 0.35);
-            outline-offset: 2px;
+            border: 1px solid #f0f0f0;
         }
 
         .date-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(255, 107, 157, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.15);
             border-color: #ffb3c9;
         }
 
-        .card-image {
-            height: 150px;
-            background-color: #ffe8f0;
+        .card-emoji {
+            width: 80px;
+            min-height: 80px;
+            background: #fff5f7;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3rem;
+            font-size: 2rem;
+            flex-shrink: 0;
         }
 
-        .card-content {
-            padding: 20px;
+        .card-body {
+            padding: 16px 20px;
+            flex: 1;
+            min-width: 0;
         }
 
-        .card-date {
+        .card-date-range {
             color: #ff6b9d;
+            font-size: 0.85rem;
             font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
+            margin-bottom: 4px;
         }
 
         .card-title {
-            margin: 10px 0;
-            font-size: 1.3rem;
-            font-weight: bold;
+            font-size: 1.15rem;
+            font-weight: 700;
             color: #333;
+            margin-bottom: 4px;
         }
 
-        .card-desc {
-            color: #666;
-            font-size: 0.95rem;
-            line-height: 1.5;
-        }
-
-        .add-new {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed #ddd;
-            background: #fafafa;
-        }
-
-        .add-new:hover {
-            border-color: #ff6b9d;
-            background: #fff5f7;
-        }
-
-        .add-content {
-            text-align: center;
+        .card-subtitle {
             color: #888;
+            font-size: 0.9rem;
+            line-height: 1.4;
         }
 
-        .plus-icon {
-            font-size: 2rem;
-            display: block;
-            margin-bottom: 10px;
+        .card-meta {
+            margin-top: 8px;
+            display: flex;
+            gap: 12px;
+            font-size: 0.8rem;
+            color: #aaa;
         }
 
         .loading {
@@ -256,18 +157,19 @@
             color: #ff6b9d;
         }
 
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state p { margin-bottom: 8px; }
+
         @media (max-width: 600px) {
-            .hub-container {
-                padding: 10px;
-            }
-
-            .hub-header h1 {
-                font-size: 1.8rem;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
+            .hub-container { padding: 10px; }
+            .hub-header h1 { font-size: 1.5rem; }
+            .card-emoji { width: 60px; font-size: 1.5rem; }
+            .card-body { padding: 12px 14px; }
         }
     </style>
 </head>
@@ -277,80 +179,74 @@
 
     <div class="hub-container">
         <header class="hub-header">
-            <h1>Date ideas as stories, not just data</h1>
+            <h1>Our Date Memories</h1>
             <p class="subtext">JOON & YOUNGAH'S WORLD TOUR</p>
-            <p class="brand-note">Build your own date journey with AI-powered storytelling.</p>
-
-            <div id="d-day-widget" style="margin-top: 25px; display: inline-block; background: white; padding: 10px 25px; border-radius: 50px; box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);">
-                <span style="color: #666; font-size: 0.95rem; font-weight: 500;">Days together</span>
-                <span id="d-day-count" style="color: #ff6b9d; font-size: 1.2rem; font-weight: bold; margin-left: 8px;">D+1</span>
-                <span style="color: #ff6b9d;">heart</span>
+            <div class="d-day-badge">
+                <span class="d-day-label">Days together</span>
+                <span class="d-day-count" id="d-day-count">D+1</span>
             </div>
         </header>
 
         <script>
             const START_DATE = '2026-01-20';
-
             function updateDDay() {
                 const start = new Date(START_DATE);
                 const today = new Date();
-
                 start.setHours(0, 0, 0, 0);
                 today.setHours(0, 0, 0, 0);
-
-                const diffTime = today - start;
-                const dayMs = 1000 * 60 * 60 * 24;
-                const diffDays = Math.floor(diffTime / dayMs) + 1;
-
-                const dDayElement = document.getElementById('d-day-count');
-                if (!dDayElement) return;
-
-                if (diffDays >= 1) {
-                    dDayElement.textContent = `D+${diffDays}`;
-                } else {
-                    dDayElement.textContent = `D-${Math.ceil(Math.abs(diffTime) / dayMs)}`;
-                }
+                const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+                const el = document.getElementById('d-day-count');
+                if (!el) return;
+                el.textContent = diffDays >= 1 ? `D+${diffDays}` : `D-${Math.ceil(Math.abs(today - start) / (1000 * 60 * 60 * 24))}`;
             }
-
             document.addEventListener('DOMContentLoaded', updateDDay);
         </script>
 
-        <div class="create-plan-section">
-            <h2 class="section-title">Create a new date plan</h2>
-            <form class="plan-form" id="planForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="planName">Plan Name</label>
-                        <input type="text" id="planName" placeholder="Example: Seoul Spring Walk" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="planDate">Date</label>
-                        <input type="date" id="planDate" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="centerLocation">Center Area / Hotel</label>
-                    <input type="text" id="centerLocation" placeholder="Example: Myeongdong, Gangnam Station" required>
-                </div>
-                <div class="form-group">
-                    <label>Mood Tags (multi-select)</label>
-                    <div class="tag-selector">
-                        <label class="tag-checkbox"><input type="checkbox" value="rainy"><span>#rainy-day</span></label>
-                        <label class="tag-checkbox"><input type="checkbox" value="first-date"><span>#first-date</span></label>
-                        <label class="tag-checkbox"><input type="checkbox" value="photos"><span>#photos</span></label>
-                        <label class="tag-checkbox"><input type="checkbox" value="quiet-talk"><span>#quiet-talk</span></label>
-                        <label class="tag-checkbox"><input type="checkbox" value="sunset"><span>#sunset</span></label>
-                        <label class="tag-checkbox"><input type="checkbox" value="night-date"><span>#night-date</span></label>
-                        <label class="tag-checkbox"><input type="checkbox" value="cafe"><span>#cafe</span></label>
-                        <label class="tag-checkbox"><input type="checkbox" value="dinner"><span>#dinner</span></label>
-                    </div>
-                </div>
-                <button type="submit" class="create-btn">Create Plan</button>
-            </form>
+        <div class="dates-toolbar">
+            <h2>Date Records</h2>
+            <button class="add-date-btn" id="addDateBtn" onclick="showNewDateModal()">+ New Record</button>
         </div>
 
         <div class="date-list" id="dateList">
             <div class="loading">Loading...</div>
+        </div>
+    </div>
+
+    <!-- New Date Record Modal -->
+    <div id="new-date-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeNewDateModal()">&times;</span>
+            <h2 style="color: #ff6b9d; margin-bottom: 20px;">New Date Record</h2>
+            <form id="newDateForm" onsubmit="submitNewDate(event)">
+                <label>Title *</label>
+                <input type="text" id="nd-title" required placeholder="e.g. Seoul Valentine's Day">
+
+                <label>Subtitle</label>
+                <input type="text" id="nd-subtitle" placeholder="e.g. Insadong walking date">
+
+                <label>Emoji</label>
+                <input type="text" id="nd-emoji" placeholder="e.g. D" maxlength="4" style="width:60px;">
+
+                <label>Start Date</label>
+                <input type="date" id="nd-start">
+
+                <label>End Date</label>
+                <input type="date" id="nd-end">
+
+                <label>Base Location Name</label>
+                <input type="text" id="nd-base-name" placeholder="e.g. Orakai Insadong Suites">
+
+                <label>Base Location Lat / Lng</label>
+                <div style="display:flex;gap:10px;">
+                    <input type="number" id="nd-base-lat" step="any" placeholder="37.5741" style="flex:1;">
+                    <input type="number" id="nd-base-lng" step="any" placeholder="126.9854" style="flex:1;">
+                </div>
+
+                <div class="modal-buttons" style="margin-top:20px;">
+                    <button type="submit" class="btn-primary">Create</button>
+                    <button type="button" class="btn-secondary" onclick="closeNewDateModal()">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -359,7 +255,7 @@
     <script>
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-        
+
         function escapeHtml(value) {
             return String(value ?? '')
                 .replace(/&/g, '&amp;')
@@ -369,64 +265,68 @@
                 .replace(/'/g, '&#39;');
         }
 
+        // Show add button only for logged-in users
+        async function checkAuth() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            const btn = document.getElementById('addDateBtn');
+            if (btn && user) btn.style.display = 'inline-block';
+        }
+
         async function loadTrips() {
             const container = document.getElementById('dateList');
 
             try {
+                // Load trips with place count
                 const { data: trips, error } = await supabaseClient
                     .from('trips')
-                    .select('*')
-                    .order('start_date', { ascending: true });
+                    .select('*, places(count)')
+                    .order('start_date', { ascending: false });
 
                 if (error) throw error;
 
                 container.innerHTML = '';
 
-                if (trips && trips.length > 0) {
-                    trips.forEach(trip => container.appendChild(createTripCard(trip)));
-                } else {
-                    const emptyDiv = document.createElement('div');
-                    emptyDiv.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 40px; color: #999;';
-                    emptyDiv.innerHTML = 'No date plans yet.<br><small>Create your first plan from the form above.</small>';
-                    container.appendChild(emptyDiv);
+                if (!trips || trips.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <p>No date records yet.</p>
+                            <p><small>Log in and create your first record!</small></p>
+                        </div>
+                    `;
+                    return;
                 }
 
-                container.appendChild(createAddCard());
+                trips.forEach(trip => container.appendChild(createTripCard(trip)));
             } catch (error) {
                 console.error('Error loading trips:', error);
                 container.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #dc3545;">
+                    <div style="text-align:center;padding:40px;color:#dc3545;">
                         Failed to load data.<br>
-                        <small>${error.message}</small><br>
-                        <small>Please check your config.js settings.</small>
+                        <small>${escapeHtml(error.message)}</small>
                     </div>
                 `;
             }
         }
 
         function createTripCard(trip) {
-            const safeSlug = encodeURIComponent(trip.slug || '');
-            const safeEmoji = escapeHtml(trip.emoji || 'D');
-            const safeTitle = escapeHtml(trip.title || '');
-            const safeSubtitle = escapeHtml(trip.subtitle || '');
-
             const card = document.createElement('a');
-            card.href = `view.html?plan=${safeSlug}`;
+            card.href = `view.html?plan=${encodeURIComponent(trip.slug || '')}`;
             card.className = 'date-card';
 
-            const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US') : '';
-            const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('en-US') : '';
-            const dateRange = startDate && endDate ? `${startDate} - ${endDate}` : 'Date TBD';
+            const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('ko-KR') : '';
+            const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('ko-KR') : '';
+            const dateRange = startDate && endDate ? `${startDate} ~ ${endDate}` : startDate || 'Date TBD';
+
+            const placeCount = trip.places?.[0]?.count || 0;
 
             card.innerHTML = `
-                <div class="card-image">${safeEmoji}</div>
-                <div class="card-content">
-                    <div class="card-date">${dateRange}</div>
-                    <div class="card-title">${safeTitle}</div>
-                    <div class="card-desc">${safeSubtitle}</div>
-                    <div class="card-tags">
-                        <span class="card-tag">#romantic</span>
-                        <span class="card-tag">#city-date</span>
+                <div class="card-emoji">${escapeHtml(trip.emoji || 'D')}</div>
+                <div class="card-body">
+                    <div class="card-date-range">${dateRange}</div>
+                    <div class="card-title">${escapeHtml(trip.title || '')}</div>
+                    <div class="card-subtitle">${escapeHtml(trip.subtitle || '')}</div>
+                    <div class="card-meta">
+                        <span>${placeCount} places</span>
                     </div>
                 </div>
             `;
@@ -434,43 +334,68 @@
             return card;
         }
 
-        function createAddCard() {
-            const card = document.createElement('button');
-            card.className = 'date-card add-new';
-            card.type = 'button';
-            card.setAttribute('aria-label', 'add-new-date-plan');
-
-            card.addEventListener('click', () => {
-                const planForm = document.getElementById('planForm');
-                const planName = document.getElementById('planName');
-
-                if (planForm && planName) {
-                    planForm.scrollIntoView({ behavior: 'smooth' });
-                    planName.focus();
-                } else {
-                    alert('Plan creation UI is not ready yet.');
-                }
-            });
-
-            card.innerHTML = `
-                <div class="card-content add-content">
-                    <span class="plus-icon">+</span>
-                    <div>Add a new date</div>
-                </div>
-            `;
-
-            return card;
+        // New Date Record
+        function showNewDateModal() {
+            document.getElementById('new-date-modal').classList.add('show');
         }
 
-        const planForm = document.getElementById('planForm');
-        if (planForm) {
-            planForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                alert('This feature is in progress. Plan creation will be added in Phase 2.');
-            });
+        function closeNewDateModal() {
+            document.getElementById('new-date-modal').classList.remove('show');
+        }
+
+        async function submitNewDate(event) {
+            event.preventDefault();
+
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) {
+                showLoginModal();
+                return;
+            }
+
+            const title = document.getElementById('nd-title').value.trim();
+            if (!title) return;
+
+            const subtitle = document.getElementById('nd-subtitle').value.trim();
+            const emoji = document.getElementById('nd-emoji').value.trim() || 'D';
+            const startDate = document.getElementById('nd-start').value || null;
+            const endDate = document.getElementById('nd-end').value || null;
+            const baseName = document.getElementById('nd-base-name').value.trim() || title;
+            const baseLat = parseFloat(document.getElementById('nd-base-lat').value) || 37.5665;
+            const baseLng = parseFloat(document.getElementById('nd-base-lng').value) || 126.9780;
+
+            // Generate slug from title
+            const slug = title.toLowerCase()
+                .replace(/[^a-z0-9가-힣\s]/g, '')
+                .replace(/\s+/g, '_')
+                .slice(0, 50)
+                + '_' + Date.now().toString(36);
+
+            try {
+                const { error } = await supabaseClient
+                    .from('trips')
+                    .insert({
+                        slug,
+                        title,
+                        subtitle: subtitle || null,
+                        emoji,
+                        base_location: { name: baseName, lat: baseLat, lng: baseLng },
+                        start_date: startDate,
+                        end_date: endDate
+                    });
+
+                if (error) throw error;
+
+                closeNewDateModal();
+                document.getElementById('newDateForm').reset();
+                await loadTrips();
+            } catch (error) {
+                console.error('Error creating date record:', error);
+                alert('Failed to create record: ' + error.message);
+            }
         }
 
         loadTrips();
+        checkAuth();
     </script>
 </body>
 

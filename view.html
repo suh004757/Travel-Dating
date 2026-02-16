@@ -1,11 +1,12 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ko">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openweathermap.org; font-src 'self' data:; frame-src 'none'; object-src 'none';">
-    <title>DateScape - Itinerary Viewer</title>
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src 'none'; object-src 'none';">
+    <title>DateScape - Date Review</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -16,51 +17,29 @@
     <div class="container">
         <div id="auth-widget"></div>
 
-        <div style="padding: 10px; background: #fff5f7; border-bottom: 1px solid #ffe8f0;">
-            <a href="index.html" style="text-decoration: none; color: #ff6b9d; font-weight: bold;">Back to Home</a>
+        <div class="back-bar">
+            <a href="index.html" class="back-link">Back to Home</a>
         </div>
 
         <header>
             <h1 id="page-title">Loading...</h1>
-            <p class="subtitle" id="page-subtitle">Fetching itinerary details...</p>
+            <p class="subtitle" id="page-subtitle"></p>
+            <p class="subtitle" id="page-dates"></p>
         </header>
 
-        <div id="weather-widget"></div>
-
-        <nav class="filter-nav">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="restaurants">Restaurants</button>
-            <button class="filter-btn" data-filter="cafes">Cafes</button>
-            <button class="share-btn" id="share-itinerary-btn" type="button">Share</button>
-        </nav>
-
-        <div class="main-content">
-            <div class="map-container">
+        <div class="map-section">
+            <div class="map-container" style="height: 400px;">
                 <div id="map"></div>
             </div>
+        </div>
 
-            <div class="info-panel">
-                <div id="todos-sidebar"></div>
-
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="restaurants">Restaurants</button>
-                    <button class="tab-btn" data-tab="cafes">Cafes</button>
-                    <button class="tab-btn" data-tab="route">Suggested Route</button>
-                </div>
-
-                <div id="restaurants-tab" class="tab-content active">
-                    <div id="restaurant-list" class="item-list"></div>
-                </div>
-
-                <div id="cafes-tab" class="tab-content">
-                    <div id="cafe-list" class="item-list"></div>
-                </div>
-
-                <div id="route-tab" class="tab-content">
-                    <div class="route-plan">
-                        <div id="route-content"></div>
-                    </div>
-                </div>
+        <div class="places-section">
+            <div class="places-header">
+                <h2 class="section-heading">Places We Visited</h2>
+                <button id="add-place-btn" class="add-place-btn" style="display:none;" onclick="showAddPlaceModal()">+ Add Place</button>
+            </div>
+            <div id="places-list" class="places-list">
+                <div class="loading">Loading places...</div>
             </div>
         </div>
 
@@ -71,9 +50,7 @@
 
     <script src="config.js"></script>
     <script src="components/auth.js"></script>
-    <script src="components/weather.js"></script>
-    <script src="components/todos.js"></script>
-    <script src="components/comments.js"></script>
+    <script src="components/reviews.js"></script>
     <script src="app.js"></script>
 </body>
 
