@@ -1316,6 +1316,51 @@ footer p {
     margin-bottom: 30px;
 }
 
+.mobile-workspace-tabs {
+    display: none;
+    position: sticky;
+    top: 0;
+    z-index: 15;
+    grid-column: 1 / -1;
+    align-self: start;
+    margin-bottom: 2px;
+    border: 1px solid #f0d6df;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 4px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(2px);
+}
+
+.mobile-workspace-tab {
+    flex: 1;
+    border: 0;
+    background: transparent;
+    color: var(--text-dark);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.86rem;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+.mobile-workspace-tab.is-active {
+    background: var(--primary-color);
+    color: #fff;
+}
+
+.mobile-workspace-tab:focus-visible {
+    outline: 2px solid rgba(255, 107, 157, 0.35);
+    outline-offset: 2px;
+}
+
+.review-workspace .map-section,
+.review-workspace .overview-panel,
+.review-workspace .places-section {
+    transition: opacity 0.2s ease;
+}
+
 .review-workspace .map-section {
     grid-area: map;
     position: relative;
@@ -1339,6 +1384,14 @@ footer p {
     max-height: min(72vh, 820px);
     overflow-y: auto;
     padding-right: 4px;
+}
+
+.review-workspace [data-mobile-section][hidden] {
+    display: none !important;
+}
+
+.review-workspace.mobile-mode [data-mobile-section].is-visible {
+    display: block;
 }
 
 .add-place-btn,
@@ -1381,6 +1434,16 @@ footer p {
 }
 
 @media (max-width: 768px) {
+    .mobile-workspace-tabs {
+        display: flex;
+        gap: 4px;
+        margin-bottom: 0;
+    }
+
+    .mobile-workspace-tab {
+        flex: 1;
+    }
+
     .container {
         padding: 12px;
     }
@@ -1486,7 +1549,7 @@ footer p {
     }
 
     .review-workspace .map-container {
-        min-height: 52vh;
+        min-height: 56vh;
     }
 
     .places-header {

@@ -32,6 +32,7 @@ async function init() {
         setupPlaceOverview(currentPlaces);
         showAddPlaceButton();
         bindAuthSync();
+        bindMobileWorkspaceSwitches();
     } catch (error) {
         showError('Failed to load date record: ' + error.message);
     }
@@ -61,6 +62,101 @@ function bindAuthSync() {
         await showAddPlaceButton();
         refreshAllReviewPanels();
     });
+}
+
+function setMobileWorkspaceMode(mode) {
+    const workspace = document.querySelector('.review-workspace');
+    const tabs = document.querySelector('.mobile-workspace-tabs');
+    if (!workspace) return;
+
+    const target = mode || (workspace.dataset.defaultMobileMode || 'map');
+    const validModes = ['map', 'overview', 'places'];
+    const nextMode = validModes.includes(target) ? target : 'map';
+
+    const sections = {
+        map: workspace.querySelector('[data-mobile-section="map"]'),
+        overview: workspace.querySelector('[data-mobile-section="overview"]'),
+        places: workspace.querySelector('[data-mobile-section="places"]')
+    };
+
+    if (tabs) {
+        const activeTab = tabs.querySelector(`.mobile-workspace-tab[data-mobile-view="${nextMode}"]`);
+        tabs.querySelectorAll('.mobile-workspace-tab').forEach((button) => {
+            const isActive = button.dataset.mobileView === nextMode;
+            const targetPanel = button.dataset.mobileView;
+            const targetSection = workspace.querySelector(`[data-mobile-section="${targetPanel}"]`);
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            button.setAttribute('tabindex', isActive ? '0' : '-1');
+            if (targetSection) {
+                button.setAttribute('aria-controls', targetSection.id || '');
+            }
+        });
+        if (activeTab) {
+            activeTab.setAttribute('tabindex', '0');
+        }
+    }
+
+    Object.entries(sections).forEach(([sectionMode, section]) => {
+        if (!section) return;
+        section.classList.toggle('is-visible', sectionMode === nextMode);
+        section.setAttribute('aria-hidden', String(sectionMode !== nextMode));
+        if (sectionMode === nextMode) {
+            section.removeAttribute('hidden');
+        } else {
+            section.setAttribute('hidden', '');
+        }
+    });
+
+    workspace.dataset.mobileMode = nextMode;
+    workspace.dataset.defaultMobileMode = nextMode;
+    window.__dateScapeMobileViewMode = nextMode;
+
+    if (nextMode === 'map' && map && typeof map.invalidateSize === 'function') {
+        setTimeout(() => map.invalidateSize(), 80);
+    }
+}
+
+function bindMobileWorkspaceSwitches() {
+    const tabs = document.querySelector('.mobile-workspace-tabs');
+    if (!tabs || window.__dateScapeMobileWorkspaceBound) return;
+    window.__dateScapeMobileWorkspaceBound = true;
+
+    tabs.addEventListener('click', (event) => {
+        const button = event.target.closest('.mobile-workspace-tab');
+        if (!button) return;
+        const mode = button.dataset.mobileView;
+        setMobileWorkspaceMode(mode);
+    });
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const applyResponsiveMode = () => {
+        const isMobile = mediaQuery.matches;
+        const workspace = document.querySelector('.review-workspace');
+        if (!workspace) return;
+
+        if (!isMobile) {
+            workspace.classList.remove('mobile-mode');
+            workspace.removeAttribute('data-mobile-mode');
+            tabs.hidden = true;
+
+            const allSections = workspace.querySelectorAll('[data-mobile-section]');
+            allSections.forEach((section) => {
+                section.classList.remove('is-visible');
+                section.removeAttribute('hidden');
+                section.removeAttribute('aria-hidden');
+            });
+            return;
+        }
+
+        workspace.classList.add('mobile-mode');
+        tabs.hidden = false;
+        const defaultMode = window.__dateScapeMobileViewMode || 'map';
+        setMobileWorkspaceMode(defaultMode);
+    };
+
+    applyResponsiveMode();
+    mediaQuery.addEventListener('change', applyResponsiveMode);
 }
 
 window.addEventListener('reviews:stats-updated', (event) => {
