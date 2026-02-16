@@ -36,6 +36,42 @@
                 </div>
             </div>
 
+            <aside class="overview-panel" aria-label="Trip overview">
+                <div class="section-heading overview-title">Trip Overview</div>
+                <div id="overview-stats" class="overview-stats">
+                    <div class="overview-card">
+                        <p class="overview-label">Total Places</p>
+                        <p class="overview-value" id="overview-total-places">0</p>
+                    </div>
+                    <div class="overview-card">
+                        <p class="overview-label">Restaurants</p>
+                        <p class="overview-value" id="overview-restaurant-count">0</p>
+                    </div>
+                    <div class="overview-card">
+                        <p class="overview-label">Cafes</p>
+                        <p class="overview-value" id="overview-cafe-count">0</p>
+                    </div>
+                    <div class="overview-card">
+                        <p class="overview-label">Reviewed Places</p>
+                        <p class="overview-value" id="overview-reviewed-places">0</p>
+                    </div>
+                </div>
+
+                <div class="overview-filter">
+                    <p class="overview-filter-title">Filter by type</p>
+                    <div class="overview-filter-actions" role="group" aria-label="Place type filter">
+                        <button class="overview-filter-btn is-active" type="button" data-filter="all">All</button>
+                        <button class="overview-filter-btn" type="button" data-filter="restaurant">Restaurant</button>
+                        <button class="overview-filter-btn" type="button" data-filter="cafe">Cafe</button>
+                    </div>
+                </div>
+
+                <div class="overview-help">
+                    <p class="overview-help-title">Tip</p>
+                    <p>Tap a card to write a review after login. Scroll list if content is long.</p>
+                </div>
+            </aside>
+
             <div class="places-section">
                 <div class="places-header">
                     <h2 class="section-heading">Places We Visited</h2>

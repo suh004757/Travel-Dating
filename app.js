@@ -4,6 +4,8 @@
 let map;
 let markers = [];
 let currentTrip = null;
+let currentPlaces = [];
+let currentPlaceTypeFilter = 'all';
 let supabaseClient;
 
 function escapeHtml(value) {
@@ -26,6 +28,8 @@ async function init() {
 
     try {
         await loadDateRecord(slug);
+        bindOverviewFilterActions();
+        setupPlaceOverview(currentPlaces);
         showAddPlaceButton();
         bindAuthSync();
     } catch (error) {
@@ -58,6 +62,11 @@ function bindAuthSync() {
         refreshAllReviewPanels();
     });
 }
+
+window.addEventListener('reviews:stats-updated', () => {
+    setupPlaceOverview(currentPlaces);
+    applyPlaceTypeFilter(currentPlaceTypeFilter);
+});
 
 // Load date record from Supabase
 async function loadDateRecord(slug) {
@@ -97,15 +106,23 @@ async function loadDateRecord(slug) {
 
     if (placesError) throw placesError;
 
+    currentPlaces = places || [];
+
     // Initialize map
-    initMap(trip.base_location, places || []);
+    initMap(trip.base_location, currentPlaces);
 
     // Render places list
-    renderPlaces(places || []);
+    renderPlaces(currentPlaces);
 }
 
 function initMap(baseLocation, places) {
     if (!document.getElementById('map')) return;
+
+    if (map) {
+        map.remove();
+        map = null;
+    }
+    markers = [];
 
     map = L.map('map').setView([baseLocation.lat, baseLocation.lng], 14);
 
@@ -163,24 +180,31 @@ function renderPlaces(places) {
     if (!container) return;
 
     container.innerHTML = '';
+    currentPlaces = Array.isArray(places) ? places : [];
 
-    if (places.length === 0) {
+    if (currentPlaces.length === 0) {
         container.innerHTML = '<div class="places-empty">No places recorded yet. Add the first one!</div>';
+        setupPlaceOverview(currentPlaces);
         return;
     }
 
-    places.forEach(place => {
+    currentPlaces.forEach((place) => {
         container.appendChild(createPlaceCard(place));
     });
 
+    setupPlaceOverview(currentPlaces);
+    applyPlaceTypeFilter(currentPlaceTypeFilter);
+
     if (typeof loadPlaceReviewsForPlaces === 'function') {
-        loadPlaceReviewsForPlaces(places).catch(() => {});
+        loadPlaceReviewsForPlaces(currentPlaces).catch(() => {});
     }
 }
 
 function createPlaceCard(place) {
     const card = document.createElement('div');
     card.className = 'place-card';
+    card.dataset.placeType = (place.type || 'other').toLowerCase();
+    card.dataset.placeId = String(place.id);
 
     const safeName = escapeHtml(place.name);
     const safeCategory = escapeHtml(place.category);
@@ -204,6 +228,59 @@ function createPlaceCard(place) {
     // Reviews are loaded in batch in renderPlaces() for performance.
 
     return card;
+}
+
+function setupPlaceOverview(places = []) {
+    const totalEl = document.getElementById('overview-total-places');
+    const restaurantEl = document.getElementById('overview-restaurant-count');
+    const cafeEl = document.getElementById('overview-cafe-count');
+    const reviewedEl = document.getElementById('overview-reviewed-places');
+
+    const placeList = Array.isArray(places) ? places : [];
+    const reviewCounts = window.__placeReviewCounts || {};
+
+    const restaurants = placeList.filter(place => (place.type || '').toLowerCase() === 'restaurant').length;
+    const cafes = placeList.filter(place => (place.type || '').toLowerCase() === 'cafe').length;
+    const reviewedPlaces = placeList.filter((place) => {
+        const placeId = place?.id != null ? String(place.id) : '';
+        return placeId && (reviewCounts[placeId] || 0) > 0;
+    }).length;
+
+    if (totalEl) totalEl.textContent = String(placeList.length);
+    if (restaurantEl) restaurantEl.textContent = String(restaurants);
+    if (cafeEl) cafeEl.textContent = String(cafes);
+    if (reviewedEl) reviewedEl.textContent = String(reviewedPlaces);
+}
+
+function bindOverviewFilterActions() {
+    const container = document.querySelector('.overview-filter-actions');
+    if (!container || window.__overviewFilterActionsBound) return;
+    window.__overviewFilterActionsBound = true;
+
+    container.addEventListener('click', (event) => {
+        const button = event.target.closest('.overview-filter-btn');
+        if (!button) return;
+
+        const filter = button.dataset.filter || 'all';
+        applyPlaceTypeFilter(filter);
+    });
+}
+
+function applyPlaceTypeFilter(filter = 'all') {
+    currentPlaceTypeFilter = filter;
+
+    const buttons = document.querySelectorAll('.overview-filter-btn');
+    buttons.forEach((button) => {
+        const isActive = (button.dataset.filter || 'all') === filter;
+        button.classList.toggle('is-active', isActive);
+    });
+
+    const cards = document.querySelectorAll('.places-list .place-card');
+    cards.forEach((card) => {
+        const cardType = (card.dataset.placeType || 'other').toLowerCase();
+        const visible = filter === 'all' || cardType === filter;
+        card.style.display = visible ? '' : 'none';
+    });
 }
 
 // Add Place Modal

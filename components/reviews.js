@@ -170,6 +170,9 @@ async function loadPlaceReviewsForPlaces(places) {
             });
         }
 
+        const reviewCounts = Object.fromEntries(placeList.map((placeId) => [placeId, (placeReviews[placeId] || []).length]));
+        window.__placeReviewCounts = Object.assign({}, reviewCounts, window.__placeReviewCounts || {});
+
         placeList.forEach((placeId) => {
             const container = document.getElementById(`reviews-${placeId}`);
             if (!container) return;
@@ -178,6 +181,10 @@ async function loadPlaceReviewsForPlaces(places) {
             const html = buildReviewSection(placeReviewList, photoMap, user, placeId);
             container.innerHTML = html;
         });
+
+        window.dispatchEvent(new CustomEvent('reviews:stats-updated', {
+            detail: { reviewCounts }
+        }));
     } catch (error) {
         console.error('Error loading reviews in bulk:', error);
 
@@ -187,6 +194,9 @@ async function loadPlaceReviewsForPlaces(places) {
                 container.innerHTML = '<div class="reviews-error">Failed to load reviews.</div>';
             }
         });
+
+        window.__placeReviewCounts = Object.fromEntries(placeList.map((placeId) => [placeId, 0]));
+        window.dispatchEvent(new CustomEvent('reviews:stats-updated'));
     }
 }
 
@@ -409,6 +419,10 @@ async function submitReview(event, placeId) {
 
         closeReviewModal();
         await loadPlaceReviews(placeId);
+        window.__placeReviewCounts = Object.assign({}, window.__placeReviewCounts || {}, { [placeId]: 1 });
+        window.dispatchEvent(new CustomEvent('reviews:stats-updated', {
+            detail: { reviewCounts: { [placeId]: 1 } }
+        }));
     } catch (error) {
         console.error('Error saving review:', error);
         alert('Failed to save review: ' + error.message);
