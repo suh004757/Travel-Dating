@@ -920,6 +920,7 @@ footer p {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
@@ -1316,47 +1317,6 @@ footer p {
     margin-bottom: 30px;
 }
 
-.mobile-workspace-tabs {
-    display: none;
-    position: sticky;
-    top: 0;
-    z-index: 15;
-    grid-column: 1 / -1;
-    align-self: start;
-    margin-bottom: 4px;
-    border: 1px solid #f0d6df;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.96);
-    padding: 3px;
-    box-shadow: var(--shadow);
-    backdrop-filter: blur(2px);
-}
-
-.mobile-workspace-tab {
-    flex: 1;
-    border: 0;
-    background: transparent;
-    color: var(--text-dark);
-    padding: 8px 4px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.74rem;
-    line-height: 1.1;
-    cursor: pointer;
-    min-height: 40px;
-    white-space: nowrap;
-}
-
-.mobile-workspace-tab.is-active {
-    background: var(--primary-color);
-    color: #fff;
-}
-
-.mobile-workspace-tab:focus-visible {
-    outline: 2px solid rgba(255, 107, 157, 0.35);
-    outline-offset: 2px;
-}
-
 .review-workspace .map-section,
 .review-workspace .overview-panel,
 .review-workspace .places-section {
@@ -1415,6 +1375,27 @@ footer p {
     display: none;
 }
 
+.mobile-map-toggle-btn {
+    display: none;
+    border: 1px solid #f1c0d3;
+    background: #fff;
+    color: var(--text-dark);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    min-height: 44px;
+    cursor: pointer;
+}
+
+.mobile-map-toggle-btn:active {
+    background: #ffe4ef;
+}
+
+.review-workspace .map-section .mobile-map-toggle-btn {
+    margin-bottom: 8px;
+}
+
 @media (max-width: 1024px) {
     .review-workspace {
         grid-template-columns: 1fr;
@@ -1449,33 +1430,6 @@ footer p {
         gap: 12px;
     }
 
-    .mobile-overview-strip {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 8px;
-        margin: 6px 0 10px;
-    }
-
-    .mobile-overview-strip-card {
-        background: var(--bg-color);
-        border: 1px solid #f5cde0;
-        border-radius: 10px;
-        padding: 8px 10px;
-        text-align: center;
-    }
-
-    .mobile-overview-strip-label {
-        font-size: 0.68rem;
-        color: var(--text-light);
-        margin-bottom: 4px;
-    }
-
-    .mobile-overview-strip-value {
-        font-size: 1rem;
-        color: var(--primary-color);
-        font-weight: 700;
-    }
-
     .mobile-place-filters {
         display: flex;
         gap: 6px;
@@ -1499,15 +1453,11 @@ footer p {
         display: none;
     }
 
-    .mobile-workspace-tabs {
-        display: flex;
-        gap: 3px;
-        margin-bottom: 0;
-        padding: 2px;
-    }
-
-    .mobile-workspace-tab {
-        flex: 1;
+    .mobile-map-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 112px;
     }
 
     .container {
@@ -1518,30 +1468,6 @@ footer p {
     .review-workspace .overview-panel,
     .review-workspace .places-section {
         margin-bottom: 0;
-    }
-
-    .overview-stats {
-        display: flex;
-        overflow-x: auto;
-        gap: 10px;
-        padding-bottom: 2px;
-        scrollbar-width: thin;
-    }
-
-    .overview-card {
-        min-width: 146px;
-        flex: 0 0 auto;
-        padding: 8px 10px;
-        min-height: 62px;
-    }
-
-    .overview-label {
-        margin-bottom: 4px;
-        font-size: 0.72rem;
-    }
-
-    .overview-value {
-        font-size: 1rem;
     }
 
     .overview-filter-actions {
@@ -1615,7 +1541,19 @@ footer p {
     }
 
     .review-workspace .map-container {
-        min-height: 56vh;
+        min-height: 48vh;
+        height: min(58vh, 620px);
+    }
+
+    .review-workspace .places-section {
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .places-header {
+        gap: 8px;
+        align-items: stretch;
+        flex-wrap: wrap;
     }
 
     .places-header {
@@ -1662,17 +1600,6 @@ footer p {
 }
 
 @media (max-width: 420px) {
-    .mobile-workspace-tabs {
-        border-radius: 8px;
-        padding: 2px;
-    }
-
-    .mobile-workspace-tab {
-        min-height: 38px;
-        padding: 7px 3px;
-        font-size: 0.71rem;
-    }
-
     .review-workspace {
         gap: 12px;
     }

@@ -69,9 +69,10 @@ function setMobileWorkspaceMode(mode) {
     const tabs = document.querySelector('.mobile-workspace-tabs');
     if (!workspace) return;
 
-    const target = mode || (workspace.dataset.defaultMobileMode || 'map');
+    const target = mode || (workspace.dataset.defaultMobileMode || 'places');
     const validModes = ['map', 'places'];
-    const nextMode = validModes.includes(target) ? target : 'map';
+    const nextMode = validModes.includes(target) ? target : 'places';
+    const isMobileMode = workspace.classList.contains('mobile-mode');
 
     const sections = {
         map: workspace.querySelector('[data-mobile-section="map"]'),
@@ -83,10 +84,10 @@ function setMobileWorkspaceMode(mode) {
         tabs.querySelectorAll('.mobile-workspace-tab').forEach((button) => {
             const isActive = button.dataset.mobileView === nextMode;
             const targetPanel = button.dataset.mobileView;
-            const targetSection = workspace.querySelector(`[data-mobile-section="${targetPanel}"]`);
             button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-selected', isActive ? 'true' : 'false');
             button.setAttribute('tabindex', isActive ? '0' : '-1');
+            const targetSection = workspace.querySelector(`[data-mobile-section="${targetPanel}"]`);
             if (targetSection) {
                 button.setAttribute('aria-controls', targetSection.id || '');
             }
@@ -111,6 +112,15 @@ function setMobileWorkspaceMode(mode) {
     workspace.dataset.defaultMobileMode = nextMode;
     window.__dateScapeMobileViewMode = nextMode;
 
+    const showMapButton = document.getElementById('mobile-show-map-btn');
+    const backMapButton = document.getElementById('mobile-back-to-places-btn');
+    if (showMapButton) {
+        showMapButton.hidden = nextMode !== 'places' || !isMobileMode;
+    }
+    if (backMapButton) {
+        backMapButton.hidden = nextMode !== 'map' || !isMobileMode;
+    }
+
     if (nextMode === 'map' && map && typeof map.invalidateSize === 'function') {
         setTimeout(() => map.invalidateSize(), 80);
     }
@@ -118,14 +128,24 @@ function setMobileWorkspaceMode(mode) {
 
 function bindMobileWorkspaceSwitches() {
     const tabs = document.querySelector('.mobile-workspace-tabs');
-    if (!tabs || window.__dateScapeMobileWorkspaceBound) return;
+    const mapToggleButtons = document.querySelectorAll('[data-mobile-view="map"], [data-mobile-view="places"]');
+    if ((window.__dateScapeMobileWorkspaceBound) || (tabs == null && mapToggleButtons.length === 0)) return;
     window.__dateScapeMobileWorkspaceBound = true;
 
-    tabs.addEventListener('click', (event) => {
-        const button = event.target.closest('.mobile-workspace-tab');
-        if (!button) return;
-        const mode = button.dataset.mobileView;
-        setMobileWorkspaceMode(mode);
+    if (tabs) {
+        tabs.addEventListener('click', (event) => {
+            const button = event.target.closest('.mobile-workspace-tab');
+            if (!button) return;
+            const mode = button.dataset.mobileView;
+            setMobileWorkspaceMode(mode);
+        });
+    }
+
+    mapToggleButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const mode = button.dataset.mobileView;
+            setMobileWorkspaceMode(mode);
+        });
     });
 
     const mediaQuery = window.matchMedia('(max-width: 768px)');
@@ -137,7 +157,9 @@ function bindMobileWorkspaceSwitches() {
         if (!isMobile) {
             workspace.classList.remove('mobile-mode');
             workspace.removeAttribute('data-mobile-mode');
-            tabs.hidden = true;
+            if (tabs) {
+                tabs.hidden = true;
+            }
 
             const allSections = workspace.querySelectorAll('[data-mobile-section]');
             allSections.forEach((section) => {
@@ -149,8 +171,10 @@ function bindMobileWorkspaceSwitches() {
         }
 
         workspace.classList.add('mobile-mode');
-        tabs.hidden = false;
-        const defaultMode = window.__dateScapeMobileViewMode || 'map';
+        if (tabs) {
+            tabs.hidden = false;
+        }
+        const defaultMode = window.__dateScapeMobileViewMode || 'places';
         setMobileWorkspaceMode(defaultMode);
     };
 
@@ -335,10 +359,6 @@ function setupPlaceOverview(places = [], stats = {}) {
     const avgRatingEl = document.getElementById('overview-avg-rating');
     const latestReviewEl = document.getElementById('overview-latest-review');
     const avgReviewsPerPlaceEl = document.getElementById('overview-avg-reviews-per-place');
-    const mobileTotalPlacesEl = document.getElementById('mobile-overview-total-places');
-    const mobileTotalReviewsEl = document.getElementById('mobile-overview-total-reviews');
-    const mobileAvgRatingEl = document.getElementById('mobile-overview-avg-rating');
-
     const placeList = Array.isArray(places) ? places : [];
     const reviewCounts = Object.assign({}, window.__placeReviewCounts || {}, stats.reviewCounts || {});
     const reviewedPlaceIds = new Set(stats.reviewedPlaceIds || []);
@@ -380,9 +400,6 @@ function setupPlaceOverview(places = [], stats = {}) {
             : '-';
     }
     if (avgReviewsPerPlaceEl) avgReviewsPerPlaceEl.textContent = avgReviewsPerPlace;
-    if (mobileTotalPlacesEl) mobileTotalPlacesEl.textContent = String(placeList.length);
-    if (mobileTotalReviewsEl) mobileTotalReviewsEl.textContent = String(totalReviews);
-    if (mobileAvgRatingEl) mobileAvgRatingEl.textContent = avgRating != null ? avgRating.toFixed(1) : '-';
 }
 
 function bindOverviewFilterActions() {
