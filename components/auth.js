@@ -21,6 +21,7 @@ async function initAuth() {
         renderAuthUI();
 
         if (event === 'SIGNED_IN') {
+            closeLoginModal();
             const isFirstLogin = !localStorage.getItem('has_logged_in_before');
             if (isFirstLogin) {
                 showWelcomeModal(session?.user);
@@ -28,9 +29,9 @@ async function initAuth() {
             }
         }
 
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-            window.location.reload();
-        }
+        window.dispatchEvent(new CustomEvent('auth-state-changed', {
+            detail: { event, user: currentUser }
+        }));
     });
 }
 
@@ -138,7 +139,11 @@ function isAuthenticated() {
 
 async function logout() {
     await supabaseClient.auth.signOut();
-    window.location.reload();
+    currentUser = null;
+    renderAuthUI();
+    window.dispatchEvent(new CustomEvent('auth-state-changed', {
+        detail: { event: 'SIGNED_OUT', user: null }
+    }));
 }
 
 if (document.readyState === 'loading') {

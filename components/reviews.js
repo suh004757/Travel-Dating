@@ -1,6 +1,6 @@
 // Reviews Component
 // Handles review CRUD + photo upload for places
-// Reviews are private and visible only to the author
+// Public read, authenticated write
 
 function escapeHtmlReview(text) {
     return String(text ?? '')
@@ -52,31 +52,19 @@ function pickStar(containerId, value) {
     if (input) input.value = value;
 }
 
-// Load only the current user's review for a place
+// Load all reviews for a place
 async function loadPlaceReviews(placeId) {
     const container = document.getElementById(`reviews-${placeId}`);
     if (!container) return;
 
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
-        if (!user) {
-            container.innerHTML = `
-                <div class="reviews-section">
-                    <div class="reviews-header">My Private Review</div>
-                    <div class="review-login-prompt">
-                        <a href="#" onclick="showLoginModal(); return false;">Log in</a> to view and write your private review
-                    </div>
-                </div>
-            `;
-            return;
-        }
 
-        // Load only my review for this place
+        // Load all reviews for this place
         const { data: reviews, error } = await supabaseClient
             .from('reviews')
             .select('*')
             .eq('place_id', placeId)
-            .eq('user_id', user.id)
             .order('created_at', { ascending: true });
 
         if (error) throw error;
@@ -101,7 +89,7 @@ async function loadPlaceReviews(placeId) {
         });
 
         let html = '<div class="reviews-section">';
-        html += '<div class="reviews-header">My Private Review</div>';
+        html += '<div class="reviews-header">Reviews</div>';
 
         if (reviews && reviews.length > 0) {
             html += '<div class="reviews-list">';
@@ -112,14 +100,20 @@ async function loadPlaceReviews(placeId) {
             });
             html += '</div>';
         } else {
-            html += '<div class="reviews-empty">No review yet. Write your private note.</div>';
+            html += '<div class="reviews-empty">No reviews yet. Be the first to leave one!</div>';
         }
 
-        const existingReview = (reviews || []).find(r => r.user_id === user.id);
-        if (existingReview) {
-            html += `<button class="review-edit-btn" onclick="showReviewModal('${placeId}', true)">Edit my review</button>`;
+        if (user) {
+            const existingReview = (reviews || []).find(r => r.user_id === user.id);
+            if (existingReview) {
+                html += `<button class="review-edit-btn" onclick="showReviewModal('${placeId}', true)">Edit my review</button>`;
+            } else {
+                html += `<button class="review-write-btn" onclick="showReviewModal('${placeId}', false)">Write a review</button>`;
+            }
         } else {
-            html += `<button class="review-write-btn" onclick="showReviewModal('${placeId}', false)">Write a review</button>`;
+            html += `<div class="review-login-prompt">
+                <a href="#" onclick="showLoginModal(); return false;">Log in</a> to write a review
+            </div>`;
         }
 
         html += '</div>';

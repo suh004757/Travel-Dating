@@ -45,9 +45,9 @@ DROP POLICY IF EXISTS "review_photos_select_own" ON review_photos;
 DROP POLICY IF EXISTS "review_photos_insert_own" ON review_photos;
 DROP POLICY IF EXISTS "review_photos_delete_own" ON review_photos;
 
--- Reviews: private to author only
+-- Reviews: public read
 CREATE POLICY "reviews_select_own" ON reviews
-    FOR SELECT USING (auth.uid() = user_id);
+    FOR SELECT USING (true);
 
 CREATE POLICY "reviews_insert_own" ON reviews
     FOR INSERT WITH CHECK (auth.uid() = user_id);
@@ -59,16 +59,9 @@ CREATE POLICY "reviews_update_own" ON reviews
 CREATE POLICY "reviews_delete_own" ON reviews
     FOR DELETE USING (auth.uid() = user_id);
 
--- Review photos: only owner of parent review can access
+-- Review photos: public read
 CREATE POLICY "review_photos_select_own" ON review_photos
-    FOR SELECT USING (
-        EXISTS (
-            SELECT 1
-            FROM reviews
-            WHERE reviews.id = review_photos.review_id
-              AND reviews.user_id = auth.uid()
-        )
-    );
+    FOR SELECT USING (true);
 
 CREATE POLICY "review_photos_insert_own" ON review_photos
     FOR INSERT WITH CHECK (

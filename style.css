@@ -1162,3 +1162,49 @@ footer p {
     color: #28a745;
     display: block;
 }
+
+/* Viewer workspace UX */
+.review-workspace {
+    display: grid;
+    grid-template-columns: minmax(380px, 520px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 30px;
+}
+
+.review-workspace .map-section {
+    position: sticky;
+    top: 20px;
+    margin-bottom: 0;
+}
+
+.review-workspace .map-container {
+    height: clamp(420px, calc(100vh - 180px), 760px);
+}
+
+.review-workspace .places-section {
+    margin-bottom: 0;
+    max-height: calc(100vh - 180px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+@media (max-width: 1024px) {
+    .review-workspace {
+        grid-template-columns: 1fr;
+    }
+
+    .review-workspace .map-section {
+        position: static;
+    }
+
+    .review-workspace .map-container {
+        height: 420px;
+    }
+
+    .review-workspace .places-section {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
+    }
+}

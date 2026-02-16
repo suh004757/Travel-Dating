@@ -27,6 +27,7 @@ async function init() {
     try {
         await loadDateRecord(slug);
         showAddPlaceButton();
+        bindAuthSync();
     } catch (error) {
         showError('Failed to load date record: ' + error.message);
     }
@@ -36,9 +37,26 @@ async function init() {
 async function showAddPlaceButton() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const btn = document.getElementById('add-place-btn');
-    if (btn && user) {
-        btn.style.display = 'inline-block';
+    if (btn) {
+        btn.style.display = user ? 'inline-block' : 'none';
     }
+}
+
+function refreshAllReviewPanels() {
+    if (!window.loadPlaceReviews) return;
+    document.querySelectorAll('.reviews-container[id^="reviews-"]').forEach((container) => {
+        const placeId = container.id.replace('reviews-', '');
+        loadPlaceReviews(placeId);
+    });
+}
+
+function bindAuthSync() {
+    if (window.__dateScapeAuthSyncBound) return;
+    window.__dateScapeAuthSyncBound = true;
+    window.addEventListener('auth-state-changed', async () => {
+        await showAddPlaceButton();
+        refreshAllReviewPanels();
+    });
 }
 
 // Load date record from Supabase
