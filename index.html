@@ -189,6 +189,7 @@
 
         <script>
             const START_DATE = '2026-01-20';
+            const RECORD_CREATION_ENABLED = false;
             function updateDDay() {
                 const start = new Date(START_DATE);
                 const today = new Date();
@@ -204,7 +205,7 @@
 
         <div class="dates-toolbar">
             <h2>Date Records</h2>
-            <button class="add-date-btn" id="addDateBtn" onclick="showNewDateModal()">+ New Record</button>
+            <button class="add-date-btn" id="addDateBtn" style="display:none;" onclick="showNewDateModal()">+ New Record</button>
         </div>
 
         <div class="date-list" id="dateList">
@@ -269,7 +270,14 @@
         async function checkAuth() {
             const { data: { user } } = await supabaseClient.auth.getUser();
             const btn = document.getElementById('addDateBtn');
-            if (btn && user) btn.style.display = 'inline-block';
+            if (!btn) return;
+
+            if (!RECORD_CREATION_ENABLED) {
+                btn.style.display = 'none';
+                return;
+            }
+
+            btn.style.display = user ? 'inline-block' : 'none';
         }
 
         async function loadTrips() {
@@ -290,7 +298,7 @@
                     container.innerHTML = `
                         <div class="empty-state">
                             <p>No date records yet.</p>
-                            <p><small>Log in and create your first record!</small></p>
+                            <p><small>Record creation is temporarily disabled while planning data sources.</small></p>
                         </div>
                     `;
                     return;
@@ -336,6 +344,10 @@
 
         // New Date Record
         function showNewDateModal() {
+            if (!RECORD_CREATION_ENABLED) {
+                alert('New record creation is temporarily disabled.');
+                return;
+            }
             document.getElementById('new-date-modal').classList.add('show');
         }
 
@@ -344,6 +356,10 @@
         }
 
         async function submitNewDate(event) {
+            if (!RECORD_CREATION_ENABLED) {
+                alert('New record creation is temporarily disabled.');
+                return;
+            }
             event.preventDefault();
 
             const { data: { user } } = await supabaseClient.auth.getUser();
@@ -365,7 +381,7 @@
 
             // Generate slug from title
             const slug = title.toLowerCase()
-                .replace(/[^a-z0-9가-힣\s]/g, '')
+                .replace(/[^a-z0-9\s_-]/g, '')
                 .replace(/\s+/g, '_')
                 .slice(0, 50)
                 + '_' + Date.now().toString(36);

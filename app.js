@@ -81,6 +81,13 @@ async function loadDateRecord(slug) {
         datesEl.textContent = endDate ? `${startDate} ~ ${endDate}` : startDate;
     }
 
+    // Load weather preview for this trip (optional)
+    if (typeof loadWeather === 'function') {
+        loadWeather(trip).catch((error) => {
+            console.error('Weather load error:', error);
+        });
+    }
+
     // Load places
     const { data: places, error: placesError } = await supabaseClient
         .from('places')

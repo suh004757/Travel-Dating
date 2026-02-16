@@ -775,6 +775,47 @@ footer p {
     margin-bottom: 30px;
 }
 
+.weather-widget {
+    margin-bottom: 18px;
+}
+
+.weather-widget .weather-summary {
+    background: #e3f2fd;
+    padding: 14px 18px;
+    border-radius: 14px;
+    border: 1px solid #c3ddff;
+    box-shadow: var(--shadow);
+    color: #1e4f9f;
+}
+
+.weather-widget .weather-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    overflow-x: auto;
+}
+
+.weather-day {
+    min-width: 115px;
+    flex: 0 0 auto;
+    background: #fff;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08);
+}
+
+.weather-day-icon {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+}
+
+.weather-day-temp {
+    font-weight: 700;
+    color: #1e4f9f;
+}
+
 .places-header {
     display: flex;
     justify-content: space-between;

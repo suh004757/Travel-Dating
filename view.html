@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; font-src 'self' data:; frame-src 'none'; object-src 'none';">
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://api.openweathermap.org; font-src 'self' data:; frame-src 'none'; object-src 'none';">
     <title>DateScape - Date Review</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -26,6 +26,8 @@
             <p class="subtitle" id="page-subtitle"></p>
             <p class="subtitle" id="page-dates"></p>
         </header>
+
+        <div id="weather-widget" class="weather-widget"></div>
 
         <div class="review-workspace">
             <div class="map-section">
@@ -53,6 +55,7 @@
     <script src="config.js"></script>
     <script src="components/auth.js"></script>
     <script src="components/reviews.js"></script>
+    <script src="components/weather.js"></script>
     <script src="app.js"></script>
 </body>
 

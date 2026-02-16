@@ -30,11 +30,13 @@ DROP POLICY IF EXISTS "review_photos_insert" ON review_photos;
 DROP POLICY IF EXISTS "review_photos_delete" ON review_photos;
 
 DROP POLICY IF EXISTS "reviews_select_own" ON reviews;
+DROP POLICY IF EXISTS "reviews_select_public" ON reviews;
 DROP POLICY IF EXISTS "reviews_insert_own" ON reviews;
 DROP POLICY IF EXISTS "reviews_update_own" ON reviews;
 DROP POLICY IF EXISTS "reviews_delete_own" ON reviews;
 
 DROP POLICY IF EXISTS "review_photos_select_own" ON review_photos;
+DROP POLICY IF EXISTS "review_photos_select_public" ON review_photos;
 DROP POLICY IF EXISTS "review_photos_insert_own" ON review_photos;
 DROP POLICY IF EXISTS "review_photos_delete_own" ON review_photos;
 
@@ -59,7 +61,7 @@ CREATE POLICY "Auth users can delete todos" ON todos
   FOR DELETE USING (auth.uid() IS NOT NULL);
 
 -- Reviews: public read, owner-only write
-CREATE POLICY "reviews_select_own" ON reviews
+CREATE POLICY "reviews_select_public" ON reviews
   FOR SELECT USING (true);
 
 CREATE POLICY "reviews_insert_own" ON reviews
@@ -73,7 +75,7 @@ CREATE POLICY "reviews_delete_own" ON reviews
   FOR DELETE USING (auth.uid() = user_id);
 
 -- Review photos: public read, owner-only write
-CREATE POLICY "review_photos_select_own" ON review_photos
+CREATE POLICY "review_photos_select_public" ON review_photos
   FOR SELECT USING (true);
 
 CREATE POLICY "review_photos_insert_own" ON review_photos

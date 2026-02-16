@@ -5,10 +5,18 @@ async function loadWeather(trip) {
     const container = document.getElementById('weather-widget');
     if (!container || !WEATHER_CONFIG.enabled) return;
 
+    if (!trip?.base_location || !trip.base_location.lat || !trip.base_location.lng) {
+        container.innerHTML = '';
+        return;
+    }
+
+    if (!WEATHER_CONFIG.apiKey) {
+        container.innerHTML = '';
+        return;
+    }
+
     container.innerHTML = `
-        <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 15px; margin: 20px 0; border-radius: 10px; text-align: center;">
-            <div style="color: #1976d2;">Loading weather forecast...</div>
-        </div>
+        <div class="weather-summary">Loading weather forecast...</div>
     `;
 
     if (!trip.start_date) {
@@ -28,7 +36,7 @@ async function loadWeather(trip) {
         const data = await response.json();
 
         const startDate = new Date(trip.start_date);
-        const endDate = new Date(trip.end_date);
+        const endDate = trip.end_date ? new Date(trip.end_date) : startDate;
 
         const forecasts = data.list.filter(item => {
             const date = new Date(item.dt * 1000);
@@ -40,9 +48,9 @@ async function loadWeather(trip) {
             return;
         }
 
-        let weatherHTML = '<div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; margin: 20px 0; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
-        weatherHTML += '<h3 style="margin: 0 0 15px 0; color: #1976d2; font-size: 1.1rem;">Weather Forecast</h3>';
-        weatherHTML += '<div style="display: flex; gap: 15px; flex-wrap: wrap;">';
+        let weatherHTML = '<div class="weather-summary">';
+        weatherHTML += '<div style="font-weight: 700; margin-bottom: 10px; color: #1d4d8f;">Weather Forecast</div>';
+        weatherHTML += '<div class="weather-row">';
 
         forecasts.forEach(forecast => {
             const date = new Date(forecast.dt * 1000);
@@ -52,11 +60,11 @@ async function loadWeather(trip) {
             const desc = forecast.weather[0].description;
 
             weatherHTML += `
-                <div style="flex: 1; min-width: 120px; background: white; padding: 12px; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 2rem;">${icon}</div>
+                <div class="weather-day">
+                    <div class="weather-day-icon">${icon}</div>
                     <div style="font-size: 0.85rem; color: #666; margin: 5px 0;">${dateStr}</div>
-                    <div style="font-size: 1.3rem; font-weight: bold; color: #1976d2;">${temp} C</div>
-                    <div style="font-size: 0.8rem; color: #888;">${desc}</div>
+                    <div class="weather-day-temp">${temp}°C</div>
+                    <div style="font-size: 0.8rem; color: #888; text-transform: capitalize;">${desc}</div>
                 </div>
             `;
         });
@@ -66,7 +74,7 @@ async function loadWeather(trip) {
         const avgTemp = forecasts.reduce((sum, forecast) => sum + forecast.main.temp, 0) / forecasts.length;
         const hasRain = forecasts.some(forecast => forecast.weather[0].main.includes('Rain'));
 
-        let tips = '<div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.5); border-radius: 5px; font-size: 0.9rem;">';
+        let tips = '<div style="margin-top: 12px; padding: 10px; background: rgba(255,255,255,0.55); border-radius: 6px; font-size: 0.9rem;">';
         tips += '<strong>Tip:</strong> ';
 
         if (hasRain) {
@@ -87,7 +95,7 @@ async function loadWeather(trip) {
     } catch (error) {
         console.error('Weather loading error:', error);
         container.innerHTML = `
-            <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 10px; text-align: center; color: #856404;">
+            <div class="weather-summary" style="background: #fff3cd; color: #856404; text-align: center;">
                 Could not load weather data. Please check your API key.
             </div>
         `;
