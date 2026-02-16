@@ -124,6 +124,106 @@ async function loadPlaceReviews(placeId) {
     }
 }
 
+async function loadPlaceReviewsForPlaces(places) {
+    const placeList = Array.isArray(places)
+        ? places.map(place => String(place.id)).filter(Boolean)
+        : [];
+
+    if (placeList.length === 0) return;
+
+    const placeReviews = Object.fromEntries(placeList.map((placeId) => [placeId, []]));
+    const photoMap = Object.create(null);
+
+    try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const { data: reviews, error } = await supabaseClient
+            .from('reviews')
+            .select('*')
+            .in('place_id', placeList)
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        const safeReviews = reviews || [];
+        safeReviews.forEach((review) => {
+            if (!placeReviews[review.place_id]) {
+                placeReviews[review.place_id] = [];
+            }
+            placeReviews[review.place_id].push(review);
+        });
+
+        const reviewIds = safeReviews.map(review => review.id);
+        if (reviewIds.length > 0) {
+            const { data: photoData, error: photoError } = await supabaseClient
+                .from('review_photos')
+                .select('*')
+                .in('review_id', reviewIds)
+                .order('created_at', { ascending: true });
+
+            if (photoError) {
+                throw photoError;
+            }
+
+            (photoData || []).forEach((photo) => {
+                if (!photoMap[photo.review_id]) photoMap[photo.review_id] = [];
+                photoMap[photo.review_id].push(photo);
+            });
+        }
+
+        placeList.forEach((placeId) => {
+            const container = document.getElementById(`reviews-${placeId}`);
+            if (!container) return;
+
+            const placeReviewList = placeReviews[placeId] || [];
+            const html = buildReviewSection(placeReviewList, photoMap, user, placeId);
+            container.innerHTML = html;
+        });
+    } catch (error) {
+        console.error('Error loading reviews in bulk:', error);
+
+        placeList.forEach((placeId) => {
+            const container = document.getElementById(`reviews-${placeId}`);
+            if (container) {
+                container.innerHTML = '<div class="reviews-error">Failed to load reviews.</div>';
+            }
+        });
+    }
+}
+
+function buildReviewSection(reviews, photoMap, user, placeId) {
+    let html = '<div class="reviews-section">';
+    html += '<div class="reviews-header">Reviews</div>';
+
+    if (reviews.length > 0) {
+        html += '<div class="reviews-list">';
+        reviews.forEach(review => {
+            const isOwn = user && review.user_id === user.id;
+            const reviewPhotos = photoMap[review.id] || [];
+            html += renderReviewCard(review, reviewPhotos, isOwn, placeId);
+        });
+        html += '</div>';
+    } else {
+        html += '<div class="reviews-empty">No reviews yet. Be the first to leave one!</div>';
+    }
+
+    if (user) {
+        const existingReview = reviews.find(r => r.user_id === user.id);
+        if (existingReview) {
+            html += `<button class="review-edit-btn" onclick="showReviewModal('${placeId}', true)">Edit my review</button>`;
+        } else {
+            html += `<button class="review-write-btn" onclick="showReviewModal('${placeId}', false)">Write a review</button>`;
+        }
+    } else {
+        html += `<div class="review-login-prompt">
+            <a href="#" onclick="showLoginModal(); return false;">Log in</a> to write a review
+        </div>`;
+    }
+
+    html += '</div>';
+
+    return html;
+}
+
 function renderReviewCard(review, photos, isOwn, placeId) {
     const safeText = escapeHtmlReview(review.text);
     const authorLabel = isOwn ? 'Me' : 'Partner';

@@ -172,6 +172,10 @@ function renderPlaces(places) {
     places.forEach(place => {
         container.appendChild(createPlaceCard(place));
     });
+
+    if (typeof loadPlaceReviewsForPlaces === 'function') {
+        loadPlaceReviewsForPlaces(places).catch(() => {});
+    }
 }
 
 function createPlaceCard(place) {
@@ -197,12 +201,7 @@ function createPlaceCard(place) {
         </div>
     `;
 
-    // Load reviews after card is in DOM
-    setTimeout(() => {
-        if (window.loadPlaceReviews) {
-            loadPlaceReviews(place.id);
-        }
-    }, 100);
+    // Reviews are loaded in batch in renderPlaces() for performance.
 
     return card;
 }

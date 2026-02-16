@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS review_photos (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE INDEX IF NOT EXISTS idx_reviews_place_id ON reviews (place_id);
+CREATE INDEX IF NOT EXISTS idx_review_photos_review_id ON review_photos (review_id);
+
 -- Enable RLS
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE review_photos ENABLE ROW LEVEL SECURITY;

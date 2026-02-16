@@ -9,16 +9,21 @@ ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE review_photos ENABLE ROW LEVEL SECURITY;
 
+-- Ensure todos tracks creator for owner-only updates/deletes
+ALTER TABLE todos ADD COLUMN IF NOT EXISTS user_id UUID;
+
 -- Drop old policies if present
 DROP POLICY IF EXISTS "Public read trips" ON trips;
 DROP POLICY IF EXISTS "Public read places" ON places;
 DROP POLICY IF EXISTS "Public read routes" ON routes;
 
 DROP POLICY IF EXISTS "Public insert for todos" ON todos;
-DROP POLICY IF EXISTS "Public update for todos" ON todos;
 DROP POLICY IF EXISTS "Auth users can insert todos" ON todos;
 DROP POLICY IF EXISTS "Auth users can update todos" ON todos;
 DROP POLICY IF EXISTS "Auth users can delete todos" ON todos;
+DROP POLICY IF EXISTS "Todos owner can update" ON todos;
+DROP POLICY IF EXISTS "Todos owner can delete" ON todos;
+DROP POLICY IF EXISTS "Public read todos" ON todos;
 
 DROP POLICY IF EXISTS "reviews_select" ON reviews;
 DROP POLICY IF EXISTS "reviews_insert" ON reviews;
@@ -50,15 +55,19 @@ CREATE POLICY "Public read places" ON places
 CREATE POLICY "Public read routes" ON routes
   FOR SELECT USING (true);
 
--- Todos: authenticated users can manage
+-- Todos: everyone can read, only owner can edit
+CREATE POLICY "Public read todos" ON todos
+  FOR SELECT USING (true);
+
 CREATE POLICY "Auth users can insert todos" ON todos
-  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Auth users can update todos" ON todos
-  FOR UPDATE USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Todos owner can update" ON todos
+  FOR UPDATE USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
 
-CREATE POLICY "Auth users can delete todos" ON todos
-  FOR DELETE USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Todos owner can delete" ON todos
+  FOR DELETE USING (user_id = auth.uid());
 
 -- Reviews: public read, owner-only write
 CREATE POLICY "reviews_select_public" ON reviews

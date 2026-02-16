@@ -95,10 +95,16 @@ async function addTodo(tripId) {
 
     if (!task) return;
 
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) {
+        showLoginModal();
+        return;
+    }
+
     try {
         const { error } = await supabaseClient
             .from('todos')
-            .insert({ trip_id: tripId, task, completed: false });
+            .insert({ trip_id: tripId, user_id: user.id, task, completed: false });
 
         if (error) throw error;
 

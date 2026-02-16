@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS routes (
 CREATE TABLE IF NOT EXISTS todos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     trip_id UUID NOT NULL REFERENCES trips(id) ON DELETE CASCADE,
+    user_id UUID,
     task TEXT NOT NULL,
     completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
