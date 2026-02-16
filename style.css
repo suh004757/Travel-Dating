@@ -1381,16 +1381,38 @@ footer p {
 }
 
 @media (max-width: 768px) {
+    .container {
+        padding: 12px;
+    }
+
+    .review-workspace .map-section,
+    .review-workspace .overview-panel,
+    .review-workspace .places-section {
+        margin-bottom: 0;
+    }
+
     .overview-stats {
         display: flex;
         overflow-x: auto;
         gap: 10px;
         padding-bottom: 2px;
+        scrollbar-width: thin;
     }
 
     .overview-card {
         min-width: 146px;
         flex: 0 0 auto;
+        padding: 8px 10px;
+        min-height: 62px;
+    }
+
+    .overview-label {
+        margin-bottom: 4px;
+        font-size: 0.72rem;
+    }
+
+    .overview-value {
+        font-size: 1rem;
     }
 
     .overview-filter-actions {
@@ -1398,12 +1420,58 @@ footer p {
         flex-wrap: nowrap;
         padding-bottom: 2px;
         margin-bottom: 4px;
+        gap: 6px;
     }
 
     .overview-filter-btn {
         min-width: 102px;
         justify-content: center;
         flex: 0 0 auto;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .overview-filter {
+        margin-bottom: 12px;
+    }
+
+    .overview-help {
+        padding: 9px 10px;
+    }
+
+    .overview-help-title {
+        font-size: 0.76rem;
+    }
+
+    .overview-help p {
+        font-size: 0.72rem;
+        line-height: 1.35;
+    }
+
+    .review-workspace .places-list {
+        gap: 12px;
+    }
+
+    .review-workspace .place-card {
+        padding: 14px;
+    }
+
+    .place-card-header,
+    .place-card .place-name,
+    .review-card-header {
+        font-size: 0.98rem;
+    }
+
+    .place-description,
+    .review-text {
+        font-size: 0.82rem;
+        line-height: 1.45;
+    }
+
+    .place-area,
+    .item-meta,
+    .review-date {
+        font-size: 0.74rem;
     }
 
     .add-place-btn,
@@ -1420,6 +1488,48 @@ footer p {
     .review-workspace .map-container {
         min-height: 52vh;
     }
+
+    .places-header {
+        margin-bottom: 12px;
+    }
+
+    .section-heading {
+        font-size: 1.16rem;
+    }
+
+    .places-empty {
+        padding: 20px 8px;
+        font-size: 0.88rem;
+    }
+
+    .weather-widget {
+        margin-bottom: 10px;
+    }
+
+    .weather-widget .weather-summary {
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+
+    .weather-widget .weather-row {
+        gap: 8px;
+        padding-bottom: 2px;
+        scrollbar-width: thin;
+    }
+
+    .weather-day {
+        min-width: 98px;
+        padding: 8px;
+    }
+
+    .weather-day-icon {
+        font-size: 1.2rem;
+        margin-bottom: 2px;
+    }
+
+    .weather-day-temp {
+        font-size: 0.88rem;
+    }
 }
 
 @media (max-width: 420px) {
@@ -1430,6 +1540,27 @@ footer p {
     .overview-panel,
     .places-section {
         border-radius: 12px;
+    }
+
+    .overview-panel {
+        padding: 12px 12px;
+    }
+
+    .overview-title {
+        font-size: 1.14rem;
+        margin-bottom: 10px;
+    }
+
+    .overview-help {
+        display: none;
+    }
+
+    .overview-filter {
+        margin-bottom: 8px;
+    }
+
+    .overview-filter-title {
+        font-size: 0.82rem;
     }
 }
 
