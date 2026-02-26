@@ -1,4 +1,4 @@
-// Reviews Component
+﻿// Reviews Component
 // Handles review CRUD + photo upload for places
 // Public read, authenticated write
 
@@ -581,3 +581,4 @@ function openPhotoViewer(url) {
     viewer.innerHTML = `<img src="${escapeHtmlReview(url)}" style="max-width:90vw;max-height:90vh;border-radius:8px;object-fit:contain;">`;
     document.body.appendChild(viewer);
 }
+
