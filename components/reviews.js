@@ -11,6 +11,19 @@ function escapeHtmlReview(text) {
         .replace(/'/g, '&#39;');
 }
 
+function getUserNickname(user) {
+    if (!user) return '';
+    const metadata = user.user_metadata || {};
+    return (
+        metadata.nickname ||
+        metadata.name ||
+        metadata.full_name ||
+        metadata.preferred_username ||
+        (user.email ? user.email.split('@')[0] : '') ||
+        'Member'
+    );
+}
+
 // Render star rating (display only)
 function renderStars(rating) {
     let html = '<span class="star-rating">';
@@ -93,10 +106,11 @@ async function loadPlaceReviews(placeId) {
 
         if (reviews && reviews.length > 0) {
             html += '<div class="reviews-list">';
+            const currentUserNickname = getUserNickname(user);
             reviews.forEach(review => {
                 const isOwn = user && review.user_id === user.id;
                 const reviewPhotos = photosByReview[review.id] || [];
-                html += renderReviewCard(review, reviewPhotos, isOwn, placeId);
+                html += renderReviewCard(review, reviewPhotos, isOwn, placeId, currentUserNickname);
             });
             html += '</div>';
         } else {
@@ -240,10 +254,11 @@ function buildReviewSection(reviews, photoMap, user, placeId) {
 
     if (reviews.length > 0) {
         html += '<div class="reviews-list">';
+        const currentUserNickname = getUserNickname(user);
         reviews.forEach(review => {
             const isOwn = user && review.user_id === user.id;
             const reviewPhotos = photoMap[review.id] || [];
-            html += renderReviewCard(review, reviewPhotos, isOwn, placeId);
+            html += renderReviewCard(review, reviewPhotos, isOwn, placeId, currentUserNickname);
         });
         html += '</div>';
     } else {
@@ -268,9 +283,11 @@ function buildReviewSection(reviews, photoMap, user, placeId) {
     return html;
 }
 
-function renderReviewCard(review, photos, isOwn, placeId) {
+function renderReviewCard(review, photos, isOwn, placeId, currentUserNickname) {
     const safeText = escapeHtmlReview(review.text);
-    const authorLabel = isOwn ? 'Me' : 'yona';
+    const authorLabel = isOwn
+        ? (currentUserNickname || review.author_name || 'Me')
+        : (review.author_name || 'Member');
     const date = new Date(review.created_at).toLocaleDateString('ko-KR');
 
     let html = `<div class="review-card ${isOwn ? 'review-own' : 'review-partner'}">`;
@@ -429,12 +446,15 @@ async function submitReview(event, placeId) {
     }
 
     try {
+        const authorName = getUserNickname(user);
+
         // Upsert review (one review per user per place)
         const { data: review, error } = await supabaseClient
             .from('reviews')
             .upsert({
                 place_id: placeId,
                 user_id: user.id,
+                author_name: authorName || null,
                 text: text || null,
                 rating: rating || null
             }, {

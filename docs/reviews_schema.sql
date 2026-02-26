@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS reviews (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     place_id UUID NOT NULL REFERENCES places(id) ON DELETE CASCADE,
     user_id UUID NOT NULL,
+    author_name TEXT,
     text TEXT,
     rating INT CHECK (rating BETWEEN 1 AND 5),
     created_at TIMESTAMPTZ DEFAULT NOW(),
