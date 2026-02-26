@@ -270,7 +270,7 @@ function buildReviewSection(reviews, photoMap, user, placeId) {
 
 function renderReviewCard(review, photos, isOwn, placeId) {
     const safeText = escapeHtmlReview(review.text);
-    const authorLabel = isOwn ? 'Me' : 'Partner';
+    const authorLabel = isOwn ? 'Me' : 'yona';
     const date = new Date(review.created_at).toLocaleDateString('ko-KR');
 
     let html = `<div class="review-card ${isOwn ? 'review-own' : 'review-partner'}">`;
