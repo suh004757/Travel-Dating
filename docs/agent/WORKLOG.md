@@ -137,3 +137,12 @@ Record one entry per loop or bootstrap action.
 - checks:
   - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files index.html`
 - residual_risk: the rewind card passed static review, but its exact feel on live data still depends on the quality of stored trip dates and has not yet been observed in a real browser session.
+
+## T-014 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html), [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js), [style.css](/d:/Joon/github/Dating/Travel-Dating/style.css)
+- finding_mobile: the detail page still made mobile users scroll through weather and highlight blocks before reaching the main workspace, and place cards kept too much desktop-style spacing and fragmented tap areas on narrow screens.
+- fix_mobile: wrapped weather and highlight sections with mobile-only collapse controls in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L81), bound responsive toggle behavior in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L786), and tightened mobile place-card actions, chips, and review header layout in [style.css](/d:/Joon/github/Dating/Travel-Dating/style.css#L1790) for iPhone-sized widths.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js,view.html,style.css`
+- residual_risk: static review passed, but the new mobile collapsible sections still need a live Safari tap pass to validate feel and scroll behavior.

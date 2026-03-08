@@ -18,6 +18,10 @@ let supabaseClient;
 const SUMMARY_SEPARATOR = ' | ';
 const MIN_POSITIVE_HIGHLIGHT_RATING = 4;
 let tripSummaryDetailsExpanded = true;
+const MOBILE_DETAIL_COLLAPSIBLES = [
+    { targetId: 'weather-panel-body', defaultExpandedDesktop: true, defaultExpandedMobile: false },
+    { targetId: 'memory-highlights-body', defaultExpandedDesktop: true, defaultExpandedMobile: false }
+];
 
 const utils = window.DateScapeUtils || {};
 const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
@@ -40,6 +44,7 @@ async function init() {
         bindPlaceSortControl();
         bindJumpToUnreviewedAction();
         bindTripSummaryDensityControl();
+        bindMobileDetailSectionToggles();
         bindAuthSync();
         bindMobileWorkspaceSwitches();
         await loadDateRecord(slug);
@@ -774,6 +779,47 @@ function bindTripSummaryDensityControl() {
             return;
         }
         setTripSummaryDetailsVisibility(true);
+    };
+
+    syncDefault();
+    mediaQuery.addEventListener('change', syncDefault);
+}
+
+function setMobileDetailSectionExpanded(targetId, expanded) {
+    const body = document.getElementById(targetId);
+    const toggle = document.querySelector(`[data-mobile-collapse-toggle][data-target="${targetId}"]`);
+    if (!body || !toggle) return;
+
+    body.hidden = !expanded;
+    toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    toggle.textContent = expanded
+        ? (toggle.dataset.expandedLabel || 'Hide section')
+        : (toggle.dataset.collapsedLabel || 'Show section');
+}
+
+function bindMobileDetailSectionToggles() {
+    if (window.__dateScapeMobileDetailTogglesBound) return;
+    window.__dateScapeMobileDetailTogglesBound = true;
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const toggles = document.querySelectorAll('[data-mobile-collapse-toggle]');
+
+    toggles.forEach((toggle) => {
+        toggle.addEventListener('click', () => {
+            const targetId = toggle.dataset.target;
+            const body = targetId ? document.getElementById(targetId) : null;
+            if (!body) return;
+            setMobileDetailSectionExpanded(targetId, body.hidden);
+        });
+    });
+
+    const syncDefault = () => {
+        MOBILE_DETAIL_COLLAPSIBLES.forEach((section) => {
+            setMobileDetailSectionExpanded(
+                section.targetId,
+                mediaQuery.matches ? section.defaultExpandedMobile : section.defaultExpandedDesktop
+            );
+        });
     };
 
     syncDefault();

@@ -198,3 +198,19 @@ acceptance_criteria:
 - The existing featured activity card and trip list continue to work
 requires_human_if:
 - Fix requires new reminder tables or notification infrastructure
+
+## T-014
+status: done
+risk_level: low
+goal: Make the detail page genuinely mobile-friendly by reducing top-of-page scroll pressure and tightening place card interactions for iPhone-sized layouts.
+files: view.html, app.js, style.css
+constraints:
+- Keep the current desktop structure intact
+- Do not change backend queries or review ownership behavior
+- Prioritize tap comfort and scan speed on narrow screens
+acceptance_criteria:
+- Secondary detail sections can be collapsed on mobile
+- Place cards use tighter mobile spacing and full-width primary actions
+- Existing overview/places/map mobile workspace logic still works
+requires_human_if:
+- Fix requires removing existing detail content entirely

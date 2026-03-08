@@ -78,17 +78,51 @@
             </div>
         </section>
 
-        <div id="weather-widget" class="weather-widget"></div>
+        <section class="secondary-panel secondary-panel--weather" aria-label="Trip weather">
+            <div class="secondary-panel-head">
+                <div class="secondary-panel-title-wrap">
+                    <p class="memory-highlights-kicker">Weather</p>
+                    <h2 class="section-heading">Trip weather</h2>
+                </div>
+                <button
+                    type="button"
+                    class="mobile-section-toggle"
+                    data-mobile-collapse-toggle
+                    data-target="weather-panel-body"
+                    data-collapsed-label="Show weather"
+                    data-expanded-label="Hide weather"
+                    aria-expanded="true"
+                >
+                    Hide weather
+                </button>
+            </div>
+            <div id="weather-panel-body" class="secondary-panel-body">
+                <div id="weather-widget" class="weather-widget"></div>
+            </div>
+        </section>
 
-        <section class="memory-highlights" aria-label="Memory highlights">
-            <div class="memory-highlights-head">
-                <div>
+        <section class="secondary-panel memory-highlights" aria-label="Memory highlights">
+            <div class="secondary-panel-head memory-highlights-head">
+                <div class="secondary-panel-title-wrap">
                     <p class="memory-highlights-kicker">Highlights</p>
                     <h2 class="section-heading">Memory snapshots</h2>
                 </div>
+                <button
+                    type="button"
+                    class="mobile-section-toggle"
+                    data-mobile-collapse-toggle
+                    data-target="memory-highlights-body"
+                    data-collapsed-label="Show highlights"
+                    data-expanded-label="Hide highlights"
+                    aria-expanded="true"
+                >
+                    Hide highlights
+                </button>
             </div>
-            <div class="memory-highlights-grid" id="memory-highlights-grid">
-                <div class="memory-highlight-empty">Snapshots will appear once reviews or photos are added.</div>
+            <div id="memory-highlights-body" class="secondary-panel-body">
+                <div class="memory-highlights-grid" id="memory-highlights-grid">
+                    <div class="memory-highlight-empty">Snapshots will appear once reviews or photos are added.</div>
+                </div>
             </div>
         </section>
 
