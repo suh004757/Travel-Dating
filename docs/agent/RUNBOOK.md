@@ -16,6 +16,12 @@ Treat `docs/agent/PRODUCT_INTENT.md`, `docs/agent/GUARDRAILS.md`, and `docs/agen
    - `done`
    - `blocked`
 
+For frontend tasks, include a mobile pass in the review:
+- narrow viewport layout
+- iPhone Safari-safe spacing and overflow behavior
+- minimum tap target sanity for primary actions
+- no hidden critical actions behind hover-only interactions
+
 ## Stop Conditions
 Stop and ask for human approval if:
 - SQL, RLS, storage, or deployment changes are needed
@@ -39,6 +45,8 @@ Each loop should leave behind:
 - A worklog entry
 - Updated task status
 - Clear remaining risks
+
+If the task touches UI, the remaining risks must explicitly mention mobile and iPhone Safari status when that was not verified live.
 
 ## Continuous Mode
 Use `scripts/agent-daemon.ps1` when you want the workspace to keep polling for the next ready task.

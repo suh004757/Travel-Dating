@@ -12,6 +12,12 @@ The agent may modify code and documentation inside this workspace, but must stop
 - Worklog and backlog updates
 - Adding or updating test and checklist infrastructure
 
+## Mobile Safety Rule
+- Frontend changes must remain mobile-friendly by default
+- iPhone Safari behavior is part of the baseline support target
+- Do not mark a frontend task `done` if layout, tap targets, or viewport behavior are likely to break on narrow mobile screens
+- Treat mobile regressions as product regressions, not optional polish
+
 ## Always Requires Human Approval
 - SQL schema changes
 - RLS policy changes
