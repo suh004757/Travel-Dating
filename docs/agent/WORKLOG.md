@@ -49,3 +49,48 @@ Record one entry per loop or bootstrap action.
 
 ## Daemon - 2026-03-08 15:05:29
 - daemon_status: stopped after reaching max idle cycles (1)
+
+## T-004 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js)
+- finding_detail: confirmed unstable metadata separators in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L418) and [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L617). Place summaries and highlight cards were not using one stable ASCII-safe join token.
+- fix_detail: added a shared separator constant in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L17) and reused it for place review summaries and highlight metadata so the touched strings render consistently.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js`
+- next_recommended_task: T-005
+
+## T-005 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html), [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js), [style.css](/d:/Joon/github/Dating/Travel-Dating/style.css)
+- finding_detail: the summary block in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L30) only surfaced completion, place count, average rating, and latest review, even though per-place review stats already included photo and text-memory signals.
+- fix_detail: added a compact `trip-insights` strip in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L54), styled it in [style.css](/d:/Joon/github/Dating/Travel-Dating/style.css#L893), and rendered derived photo-count / rating-only / written-memory stats in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L544) without changing backend contracts.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js,view.html,style.css`
+- next_recommended_task: T-006
+
+## T-006 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html), [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js), [style.css](/d:/Joon/github/Dating/Travel-Dating/style.css)
+- finding_detail: the current detail page required operators to visually scan the entire list for missing reviews even though the default sort already prioritized unreviewed stops.
+- fix_detail: added a jump action in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L157), bound it in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L708), and updated filter/sort refresh handling in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L739) so the button only appears when a currently relevant unreviewed card exists and scrolls to that target.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js,view.html,style.css`
+- next_recommended_task: T-007
+
+## T-007 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html)
+- finding_home: the archive had no quick narrowing path once the trip list grew, even though card text already contained enough information to support a read-only client-side search.
+- fix_home: added a search input and client-side archive filtering in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L462) and [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L616) so trip cards can be filtered by title, subtitle, status-facing text, and summary copy while keeping the featured memory card intact.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files index.html`
+- next_recommended_task: T-008
+
+## T-008 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html)
+- finding_home: the archive landing page still read mostly like a flat list and did not summarize total trip, place, review, and rating volume at the top.
+- fix_home: added an archive stats strip in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L423), rendered aggregate trip/place/review/rating values from already loaded data in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L589), and reset those values cleanly when no trips are returned in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L662).
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files index.html`
+- residual_risk: all five loops passed static review gates, but browser-level Supabase flows and mobile tap interactions still need a live manual pass before treating this as release-ready.

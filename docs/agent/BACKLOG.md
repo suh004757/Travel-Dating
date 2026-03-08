@@ -49,7 +49,7 @@ requires_human_if:
 - Fix requires changing trip or place schema
 
 ## T-004
-status: ready
+status: done
 risk_level: low
 goal: Fix detail-page metadata formatting defects and remove any corrupted separator output in place summaries and highlight cards.
 files: app.js
@@ -64,7 +64,7 @@ requires_human_if:
 - Fix requires changing stored data encoding
 
 ## T-005
-status: ready
+status: done
 risk_level: low
 goal: Add a compact memory insights strip to the detail summary using existing review and photo statistics.
 files: view.html, app.js, style.css
@@ -79,7 +79,7 @@ requires_human_if:
 - Fix requires new backend fields
 
 ## T-006
-status: ready
+status: done
 risk_level: low
 goal: Add a fast path from the detail page to the next unreviewed place so operators can keep filling gaps quickly.
 files: view.html, app.js, style.css
@@ -94,7 +94,7 @@ requires_human_if:
 - Fix requires changing review ownership rules
 
 ## T-007
-status: ready
+status: done
 risk_level: low
 goal: Add a home archive search input that filters trip cards by title, subtitle, and status-facing text.
 files: index.html
@@ -109,7 +109,7 @@ requires_human_if:
 - Fix requires server-side search
 
 ## T-008
-status: ready
+status: done
 risk_level: low
 goal: Add a top-level archive stats strip on the home page so the archive reads like a dashboard rather than a raw list.
 files: index.html

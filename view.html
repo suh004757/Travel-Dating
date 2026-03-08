@@ -51,6 +51,23 @@
                     <strong class="trip-summary-value" id="summary-latest-review">-</strong>
                 </div>
             </div>
+            <div class="trip-insights" id="trip-insights" aria-label="Trip memory insights">
+                <div class="trip-insight-card">
+                    <span class="trip-insight-label">Captured photos</span>
+                    <strong class="trip-insight-value">0</strong>
+                    <p class="trip-insight-text">Photo memories will appear here once reviews include images.</p>
+                </div>
+                <div class="trip-insight-card">
+                    <span class="trip-insight-label">Rating-only stops</span>
+                    <strong class="trip-insight-value">0</strong>
+                    <p class="trip-insight-text">These are places with stars but no written reflection yet.</p>
+                </div>
+                <div class="trip-insight-card">
+                    <span class="trip-insight-label">Written memories</span>
+                    <strong class="trip-insight-value">0</strong>
+                    <p class="trip-insight-text">Places with at least one text review are counted here.</p>
+                </div>
+            </div>
         </section>
 
         <div id="weather-widget" class="weather-widget"></div>
@@ -142,6 +159,7 @@
                             <option value="rating">Highest rated</option>
                             <option value="recent">Latest review</option>
                         </select>
+                        <button type="button" id="jump-unreviewed-btn" class="jump-unreviewed-btn" hidden>Jump to next unreviewed</button>
                         <button type="button" id="mobile-show-map-btn" class="mobile-map-toggle-btn" data-mobile-view="map" aria-controls="mobile-panel-map">Show map</button>
                         <button type="button" id="mobile-show-overview-btn" class="mobile-map-toggle-btn" data-mobile-view="overview" aria-controls="mobile-panel-overview">Overview</button>
                         <button id="add-place-btn" class="add-place-btn" style="display:none;" onclick="showAddPlaceModal()">+ Add Place</button>

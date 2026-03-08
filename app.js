@@ -15,6 +15,7 @@ let currentReviewSnapshot = {
     placeStats: {}
 };
 let supabaseClient;
+const SUMMARY_SEPARATOR = ' | ';
 
 const utils = window.DateScapeUtils || {};
 const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
@@ -34,6 +35,7 @@ async function init() {
     try {
         bindOverviewFilterActions();
         bindPlaceSortControl();
+        bindJumpToUnreviewedAction();
         bindAuthSync();
         bindMobileWorkspaceSwitches();
         await loadDateRecord(slug);
@@ -191,6 +193,7 @@ window.addEventListener('reviews:stats-updated', (event) => {
     decoratePlaceCards();
     setupPlaceOverview(currentPlaces, currentReviewSnapshot);
     renderTripSummary(currentPlaces, currentReviewSnapshot);
+    renderTripInsights(currentPlaces, currentReviewSnapshot);
     renderHighlights(currentPlaces, currentReviewSnapshot.placeStats || {});
     applyPlaceSorting();
     applyPlaceTypeFilter(currentPlaceTypeFilter);
@@ -247,6 +250,7 @@ async function loadDateRecord(slug) {
     } else {
         setupPlaceOverview(currentPlaces, currentReviewSnapshot);
         renderTripSummary(currentPlaces, currentReviewSnapshot);
+        renderTripInsights(currentPlaces, currentReviewSnapshot);
         renderHighlights(currentPlaces, {});
     }
 }
@@ -318,6 +322,7 @@ function renderPlaces(places) {
         container.innerHTML = '<div class="places-empty">No places recorded yet. Add the first one!</div>';
         setupPlaceOverview(currentPlaces, currentReviewSnapshot);
         renderTripSummary(currentPlaces, currentReviewSnapshot);
+        renderTripInsights(currentPlaces, currentReviewSnapshot);
         renderHighlights(currentPlaces, {});
         return;
     }
@@ -329,6 +334,7 @@ function renderPlaces(places) {
     decoratePlaceCards();
     setupPlaceOverview(currentPlaces, currentReviewSnapshot);
     renderTripSummary(currentPlaces, currentReviewSnapshot);
+    renderTripInsights(currentPlaces, currentReviewSnapshot);
     renderHighlights(currentPlaces, currentReviewSnapshot.placeStats || {});
     applyPlaceSorting();
     applyPlaceTypeFilter(currentPlaceTypeFilter);
@@ -422,7 +428,7 @@ function decoratePlaceCards() {
                 if (averageRating != null) parts.push(`avg ${averageRating.toFixed(1)}/5`);
                 if (latestReviewLabel) parts.push(`latest ${latestReviewLabel}`);
                 if (photoCount > 0) parts.push(`${photoCount} photo${photoCount > 1 ? 's' : ''}`);
-                summaryEl.textContent = parts.join(' · ');
+                summaryEl.textContent = parts.join(SUMMARY_SEPARATOR);
             }
         }
 
@@ -535,6 +541,54 @@ function renderTripSummary(places = [], stats = {}) {
     if (latestReviewEl) latestReviewEl.textContent = latestReview || '-';
 }
 
+function renderTripInsights(places = [], stats = {}) {
+    const container = document.getElementById('trip-insights');
+    if (!container) return;
+
+    const placeStats = stats.placeStats || {};
+    const totalPhotos = Object.values(placeStats).reduce((sum, item) => sum + (Number(item?.photoCount) || 0), 0);
+    const ratingOnlyStops = places.filter((place) => {
+        const item = placeStats[String(place.id)] || {};
+        return (Number(item.reviewCount) || 0) > 0 && !item.hasTextReview;
+    }).length;
+    const writtenMemories = places.filter((place) => {
+        const item = placeStats[String(place.id)] || {};
+        return Boolean(item.hasTextReview);
+    }).length;
+
+    const cards = [
+        {
+            label: 'Captured photos',
+            value: String(totalPhotos),
+            text: totalPhotos > 0
+                ? `${totalPhotos} photo${totalPhotos > 1 ? 's are' : ' is'} attached across this trip.`
+                : 'Photo memories will appear here once reviews include images.'
+        },
+        {
+            label: 'Rating-only stops',
+            value: String(ratingOnlyStops),
+            text: ratingOnlyStops > 0
+                ? `${ratingOnlyStops} stop${ratingOnlyStops > 1 ? 's still need' : ' still needs'} a written reflection.`
+                : 'Every rated stop already has at least one written memory.'
+        },
+        {
+            label: 'Written memories',
+            value: String(writtenMemories),
+            text: writtenMemories > 0
+                ? `${writtenMemories}/${places.length || 0} place${writtenMemories > 1 ? 's carry' : ' carries'} a text review.`
+                : 'No written memories yet.'
+        }
+    ];
+
+    container.innerHTML = cards.map((card) => `
+        <div class="trip-insight-card">
+            <span class="trip-insight-label">${escapeHtml(card.label)}</span>
+            <strong class="trip-insight-value">${escapeHtml(card.value)}</strong>
+            <p class="trip-insight-text">${escapeHtml(card.text)}</p>
+        </div>
+    `).join('');
+}
+
 function buildTripMoodSummary(summary) {
     if (summary.totalPlaces === 0) {
         return 'No places have been saved yet, so this trip is still waiting for its first shared memory.';
@@ -621,7 +675,7 @@ function renderHighlights(places = [], placeStats = {}) {
                     <span class="memory-highlight-type">${escapeHtml(item.type)}</span>
                     <h3>${safeTitle}</h3>
                     <p>${safeCategory}</p>
-                    <div class="memory-highlight-meta">${meta.join(' · ') || 'Waiting for more details'}</div>
+                    <div class="memory-highlight-meta">${meta.join(SUMMARY_SEPARATOR) || 'Waiting for more details'}</div>
                 </div>
             </article>
         `;
@@ -652,6 +706,15 @@ function bindPlaceSortControl() {
     });
 }
 
+function bindJumpToUnreviewedAction() {
+    const button = document.getElementById('jump-unreviewed-btn');
+    if (!button || window.__jumpToUnreviewedBound) return;
+    window.__jumpToUnreviewedBound = true;
+    button.addEventListener('click', () => {
+        jumpToNextUnreviewedPlace();
+    });
+}
+
 function applyPlaceTypeFilter(filter = 'all') {
     currentPlaceTypeFilter = filter;
 
@@ -677,6 +740,8 @@ function applyPlaceTypeFilter(filter = 'all') {
     if (empty) {
         empty.hidden = visibleCount > 0;
     }
+
+    updateNextUnreviewedAction();
 }
 
 function applyPlaceSorting() {
@@ -686,6 +751,7 @@ function applyPlaceSorting() {
     const cards = Array.from(container.querySelectorAll('.place-card'));
     cards.sort((a, b) => comparePlaceCards(a, b, currentPlaceSort));
     cards.forEach((card) => container.appendChild(card));
+    updateNextUnreviewedAction();
 }
 
 function comparePlaceCards(cardA, cardB, sortKey) {
@@ -713,6 +779,49 @@ function comparePlaceCards(cardA, cardB, sortKey) {
     const reviewedA = cardA.dataset.hasReviews === 'true' ? 1 : 0;
     const reviewedB = cardB.dataset.hasReviews === 'true' ? 1 : 0;
     return (reviewedA - reviewedB) || originalDiff;
+}
+
+function getNextRelevantUnreviewedCard() {
+    const cards = Array.from(document.querySelectorAll('.places-list .place-card'));
+    return cards.find((card) => {
+        const isVisible = card.style.display !== 'none';
+        return isVisible && card.dataset.hasReviews !== 'true';
+    }) || null;
+}
+
+function updateNextUnreviewedAction() {
+    const button = document.getElementById('jump-unreviewed-btn');
+    if (!button) return;
+
+    const hasAnyUnreviewed = currentPlaces.some((place) => {
+        const stats = currentReviewSnapshot.placeStats?.[String(place.id)] || {};
+        return (Number(stats.reviewCount) || 0) === 0;
+    });
+    const nextCard = getNextRelevantUnreviewedCard();
+
+    if (!hasAnyUnreviewed || !nextCard) {
+        button.hidden = true;
+        return;
+    }
+
+    const placeName = nextCard.querySelector('.place-name')?.textContent?.trim() || 'next stop';
+    button.hidden = false;
+    button.textContent = `Jump to ${placeName}`;
+}
+
+function jumpToNextUnreviewedPlace() {
+    const nextCard = getNextRelevantUnreviewedCard();
+    if (!nextCard) return;
+
+    setMobileWorkspaceMode('places');
+    nextCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    nextCard.classList.remove('place-card--jump-target');
+    window.requestAnimationFrame(() => {
+        nextCard.classList.add('place-card--jump-target');
+    });
+    window.setTimeout(() => {
+        nextCard.classList.remove('place-card--jump-target');
+    }, 1800);
 }
 
 function showAddPlaceModal() {

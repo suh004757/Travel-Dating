@@ -130,11 +130,42 @@
             white-space: nowrap;
         }
 
+        .archive-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .archive-stat-card {
+            background: white;
+            border: 1px solid #f3d8e2;
+            border-radius: 18px;
+            padding: 16px 18px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .archive-stat-label {
+            display: block;
+            color: #888;
+            font-size: 0.78rem;
+            margin-bottom: 6px;
+        }
+
+        .archive-stat-value {
+            display: block;
+            color: #333;
+            font-size: 1.35rem;
+            font-weight: 700;
+        }
+
         .dates-toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 16px;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .dates-toolbar h2 {
@@ -147,6 +178,29 @@
             color: #888;
             font-size: 0.9rem;
             margin-top: 4px;
+        }
+
+        .archive-toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin-left: auto;
+        }
+
+        .archive-search {
+            min-width: min(320px, 100%);
+        }
+
+        .archive-search input {
+            width: 100%;
+            min-height: 44px;
+            border: 1px solid #f0bfd1;
+            border-radius: 999px;
+            padding: 0 16px;
+            font-size: 0.92rem;
+            background: white;
         }
 
         .add-date-btn {
@@ -341,6 +395,19 @@
                 align-items: flex-start;
                 gap: 12px;
             }
+
+            .archive-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .archive-toolbar-actions,
+            .archive-search {
+                width: 100%;
+            }
+
+            .archive-search {
+                min-width: 0;
+            }
         }
     </style>
 </head>
@@ -369,12 +436,36 @@
             <div class="featured-trip-badge" id="featuredTripBadge">Reviewing</div>
         </a>
 
+        <section class="archive-stats" id="archiveStats" aria-label="Archive stats">
+            <div class="archive-stat-card">
+                <span class="archive-stat-label">Trips</span>
+                <strong class="archive-stat-value" id="archiveTripsValue">0</strong>
+            </div>
+            <div class="archive-stat-card">
+                <span class="archive-stat-label">Places</span>
+                <strong class="archive-stat-value" id="archivePlacesValue">0</strong>
+            </div>
+            <div class="archive-stat-card">
+                <span class="archive-stat-label">Reviews</span>
+                <strong class="archive-stat-value" id="archiveReviewsValue">0</strong>
+            </div>
+            <div class="archive-stat-card">
+                <span class="archive-stat-label">Avg. Rating</span>
+                <strong class="archive-stat-value" id="archiveAverageValue">-</strong>
+            </div>
+        </section>
+
         <div class="dates-toolbar">
             <div>
                 <h2>Date Records</h2>
                 <p>Each record captures the route, the reviews, and the mood of the trip.</p>
             </div>
-            <button class="add-date-btn" id="addDateBtn" style="display:none;" onclick="showNewDateModal()">+ New Record</button>
+            <div class="archive-toolbar-actions">
+                <label class="archive-search" for="archiveSearch">
+                    <input type="search" id="archiveSearch" placeholder="Search by title, subtitle, or status">
+                </label>
+                <button class="add-date-btn" id="addDateBtn" style="display:none;" onclick="showNewDateModal()">+ New Record</button>
+            </div>
         </div>
 
         <div class="date-list" id="dateList">
@@ -422,6 +513,7 @@
     <script>
         const START_DATE = '2026-01-20';
         const RECORD_CREATION_ENABLED = false;
+        const ARCHIVE_REQUEST_TIMEOUT_MS = 12000;
 
         function updateDDay() {
             const start = new Date(START_DATE);
@@ -445,6 +537,7 @@
         const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
         const utils = window.DateScapeUtils || {};
         const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
+        let allTripEntries = [];
 
         async function checkAuth() {
             const { data: { user } } = await supabaseClient.auth.getUser();
@@ -493,20 +586,112 @@
             return `${stats.placeCount - stats.reviewedPlaceCount} place${stats.placeCount - stats.reviewedPlaceCount > 1 ? 's are' : ' is'} still waiting for a review.`;
         }
 
+        function withTimeout(promise, label) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => {
+                    window.setTimeout(() => {
+                        reject(new Error(`${label} timed out after ${ARCHIVE_REQUEST_TIMEOUT_MS / 1000} seconds.`));
+                    }, ARCHIVE_REQUEST_TIMEOUT_MS);
+                })
+            ]);
+        }
+
+        function renderArchiveError(container, message) {
+            if (!container) return;
+            container.innerHTML = `
+                <div style="text-align:center;padding:40px;color:#dc3545;">
+                    Failed to load data.<br>
+                    <small>${escapeHtml(message)}</small>
+                </div>
+            `;
+        }
+
+        function renderArchiveStats(summary) {
+            const tripsEl = document.getElementById('archiveTripsValue');
+            const placesEl = document.getElementById('archivePlacesValue');
+            const reviewsEl = document.getElementById('archiveReviewsValue');
+            const averageEl = document.getElementById('archiveAverageValue');
+            if (tripsEl) tripsEl.textContent = String(summary.tripCount || 0);
+            if (placesEl) placesEl.textContent = String(summary.placeCount || 0);
+            if (reviewsEl) reviewsEl.textContent = String(summary.reviewCount || 0);
+            if (averageEl) {
+                averageEl.textContent = Number.isFinite(summary.averageRating)
+                    ? `${summary.averageRating.toFixed(1)}/5`
+                    : '-';
+            }
+        }
+
+        function getTripSearchHaystack(entry) {
+            const trip = entry.trip || {};
+            const stats = entry.stats || {};
+            const status = getTripStatus(stats).label;
+            return [
+                trip.title || '',
+                trip.subtitle || '',
+                status,
+                buildTripSummaryLine(stats)
+            ].join(' ').toLowerCase();
+        }
+
+        function renderTripArchive(entries, query = '') {
+            const container = document.getElementById('dateList');
+            if (!container) return;
+
+            const normalizedQuery = String(query || '').trim().toLowerCase();
+            const visibleEntries = normalizedQuery
+                ? entries.filter((entry) => getTripSearchHaystack(entry).includes(normalizedQuery))
+                : entries;
+
+            container.innerHTML = '';
+
+            if (visibleEntries.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No records match "${escapeHtml(query)}".</p>
+                        <p><small>Try a title, subtitle, or status like Reviewing.</small></p>
+                    </div>
+                `;
+                return;
+            }
+
+            visibleEntries.forEach((entry) => container.appendChild(createTripCard(entry.trip, entry.stats)));
+        }
+
+        function bindArchiveSearch() {
+            const input = document.getElementById('archiveSearch');
+            if (!input || window.__archiveSearchBound) return;
+            window.__archiveSearchBound = true;
+            input.addEventListener('input', (event) => {
+                renderTripArchive(allTripEntries, event.target.value || '');
+            });
+        }
+
         async function loadTrips() {
             const container = document.getElementById('dateList');
 
             try {
-                const { data: trips, error } = await supabaseClient
-                    .from('trips')
-                    .select('*')
-                    .order('start_date', { ascending: false });
-
-                if (error) throw error;
+                const tripResponse = await withTimeout(
+                    supabaseClient
+                        .from('trips')
+                        .select('*')
+                        .order('start_date', { ascending: false }),
+                    'Trip archive request'
+                );
+                if (tripResponse.error) throw tripResponse.error;
+                const loadedTrips = tripResponse.data;
 
                 container.innerHTML = '';
 
-                if (!trips || trips.length === 0) {
+                if (!loadedTrips || loadedTrips.length === 0) {
+                    allTripEntries = [];
+                    renderFeaturedTrip(null);
+                    renderArchiveStats({
+                        tripCount: 0,
+                        placeCount: 0,
+                        reviewCount: 0,
+                        averageRating: null
+                    });
                     container.innerHTML = `
                         <div class="empty-state">
                             <p>No date records yet.</p>
@@ -516,35 +701,44 @@
                     return;
                 }
 
-                const tripIds = trips.map((trip) => trip.id);
-                const { data: places, error: placesError } = await supabaseClient
-                    .from('places')
-                    .select('id, trip_id')
-                    .in('trip_id', tripIds);
+                const tripIds = loadedTrips.map((trip) => trip.id);
+                const placesResponse = await withTimeout(
+                    supabaseClient
+                        .from('places')
+                        .select('id, trip_id')
+                        .in('trip_id', tripIds),
+                    'Place archive request'
+                );
 
-                if (placesError) throw placesError;
+                if (placesResponse.error) throw placesResponse.error;
+                const places = placesResponse.data || [];
 
                 const placesByTrip = Object.create(null);
                 const placeIdToTripId = Object.create(null);
-                (places || []).forEach((place) => {
+                places.forEach((place) => {
                     if (!placesByTrip[place.trip_id]) placesByTrip[place.trip_id] = [];
                     placesByTrip[place.trip_id].push(place.id);
                     placeIdToTripId[place.id] = place.trip_id;
                 });
 
-                const placeIds = (places || []).map((place) => place.id);
+                const placeIds = places.map((place) => place.id);
                 let reviews = [];
                 if (placeIds.length > 0) {
-                    const { data: reviewData, error: reviewError } = await supabaseClient
-                        .from('reviews')
-                        .select('place_id, rating, created_at, updated_at')
-                        .in('place_id', placeIds);
+                    const reviewsResponse = await withTimeout(
+                        supabaseClient
+                            .from('reviews')
+                            .select('place_id, rating, created_at, updated_at')
+                            .in('place_id', placeIds),
+                        'Review archive request'
+                    );
 
-                    if (reviewError) throw reviewError;
-                    reviews = reviewData || [];
+                    if (reviewsResponse.error) throw reviewsResponse.error;
+                    reviews = reviewsResponse.data || [];
                 }
 
-                const statsByTrip = Object.fromEntries(trips.map((trip) => [trip.id, {
+                const ratedReviews = reviews.filter((review) => Number(review.rating) > 0).map((review) => Number(review.rating));
+
+                const statsByTrip = Object.fromEntries(loadedTrips.map((trip) => [trip.id, {
                     placeCount: (placesByTrip[trip.id] || []).length,
                     reviewCount: 0,
                     reviewedPlaceIds: new Set(),
@@ -570,7 +764,7 @@
                     }
                 });
 
-                const enrichedTrips = trips.map((trip) => {
+                const enrichedTrips = loadedTrips.map((trip) => {
                     const stats = statsByTrip[trip.id];
                     const avgRating = stats.ratings.length > 0
                         ? stats.ratings.reduce((sum, rating) => sum + rating, 0) / stats.ratings.length
@@ -595,16 +789,20 @@
                         return timeB - timeA;
                     })[0];
 
+                allTripEntries = enrichedTrips;
                 renderFeaturedTrip(featured);
-                enrichedTrips.forEach((entry) => container.appendChild(createTripCard(entry.trip, entry.stats)));
+                renderArchiveStats({
+                    tripCount: enrichedTrips.length,
+                    placeCount: (places || []).length,
+                    reviewCount: reviews.length,
+                    averageRating: ratedReviews.length > 0
+                        ? ratedReviews.reduce((sum, rating) => sum + rating, 0) / ratedReviews.length
+                        : null
+                });
+                renderTripArchive(allTripEntries, document.getElementById('archiveSearch')?.value || '');
             } catch (error) {
                 console.error('Error loading trips:', error);
-                container.innerHTML = `
-                    <div style="text-align:center;padding:40px;color:#dc3545;">
-                        Failed to load data.<br>
-                        <small>${escapeHtml(error.message)}</small>
-                    </div>
-                `;
+                renderArchiveError(container, error.message || 'Unknown archive load error');
             }
         }
 
@@ -737,6 +935,7 @@
             }
         }
 
+        bindArchiveSearch();
         loadTrips();
         checkAuth();
     </script>
