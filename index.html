@@ -130,6 +130,75 @@
             white-space: nowrap;
         }
 
+        .rewind-trip {
+            display: none;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 16px;
+            background: white;
+            color: #333;
+            border-radius: 22px;
+            padding: 22px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+            border: 1px solid #f3d8e2;
+            text-decoration: none;
+        }
+
+        .rewind-trip.is-visible {
+            display: grid;
+        }
+
+        .rewind-trip-kicker {
+            font-size: 0.78rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #c44569;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .rewind-trip-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .rewind-trip-copy {
+            color: #666;
+            max-width: 560px;
+            margin: 0;
+        }
+
+        .rewind-trip-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .rewind-trip-stat {
+            background: #fff5f7;
+            border: 1px solid #f3d8e2;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.83rem;
+            color: #80505f;
+            font-weight: 600;
+        }
+
+        .rewind-trip-badge {
+            align-self: start;
+            background: #fff5f7;
+            border: 1px solid #f3d8e2;
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+            color: #c44569;
+        }
+
         .dates-toolbar {
             display: flex;
             justify-content: space-between;
@@ -319,12 +388,14 @@
             }
 
             .featured-trip,
+            .rewind-trip,
             .date-card {
                 grid-template-columns: 1fr;
                 display: block;
             }
 
-            .featured-trip-badge {
+            .featured-trip-badge,
+            .rewind-trip-badge {
                 margin-top: 10px;
                 display: inline-flex;
             }
@@ -410,6 +481,16 @@
                 <div class="featured-trip-stats" id="featuredTripStats"></div>
             </div>
             <div class="featured-trip-badge" id="featuredTripBadge">Reviewing</div>
+        </a>
+
+        <a id="rewindTrip" class="rewind-trip" href="#">
+            <div>
+                <p class="rewind-trip-kicker">From the archive</p>
+                <div class="rewind-trip-title" id="rewindTripTitle">A memory from this part of the year</div>
+                <p class="rewind-trip-copy" id="rewindTripCopy">A past trip close to today on the calendar will appear here.</p>
+                <div class="rewind-trip-stats" id="rewindTripStats"></div>
+            </div>
+            <div class="rewind-trip-badge" id="rewindTripBadge">Revisit</div>
         </a>
 
         <div class="dates-toolbar">
@@ -568,6 +649,76 @@
             };
         }
 
+        function getTripAnchorDate(trip) {
+            if (!trip) return null;
+            return trip.start_date || trip.end_date || null;
+        }
+
+        function getAnniversaryDistanceDays(value, referenceDate = new Date()) {
+            if (!value) return Number.POSITIVE_INFINITY;
+            const source = new Date(value);
+            if (Number.isNaN(source.getTime())) return Number.POSITIVE_INFINITY;
+
+            const month = source.getMonth();
+            const day = source.getDate();
+            const reference = new Date(referenceDate);
+            reference.setHours(0, 0, 0, 0);
+
+            const candidates = [
+                new Date(reference.getFullYear() - 1, month, day),
+                new Date(reference.getFullYear(), month, day),
+                new Date(reference.getFullYear() + 1, month, day)
+            ];
+
+            return Math.min(...candidates.map((candidate) => Math.abs(Math.round((candidate - reference) / (1000 * 60 * 60 * 24)))));
+        }
+
+        function buildRewindCopy(entry, anniversaryDistance) {
+            if (!entry) {
+                return 'A past trip close to today on the calendar will appear here.';
+            }
+
+            if (anniversaryDistance === 0) {
+                return 'This trip happened on this date. A good time to revisit the photos and reflections.';
+            }
+
+            if (anniversaryDistance <= 7) {
+                return `This memory falls around this week on the calendar, with ${entry.stats.reviewCount} saved review${entry.stats.reviewCount === 1 ? '' : 's'}.`;
+            }
+
+            if (anniversaryDistance <= 31) {
+                return 'This trip belongs to this stretch of the calendar and is worth reopening before it slips past.';
+            }
+
+            return 'A past trip close to today on the calendar will appear here.';
+        }
+
+        function findRewindEntry(entries) {
+            if (!Array.isArray(entries) || entries.length === 0) return null;
+
+            const rankedEntries = entries
+                .map((entry) => ({
+                    entry,
+                    anchorDate: getTripAnchorDate(entry.trip),
+                    anniversaryDistance: getAnniversaryDistanceDays(getTripAnchorDate(entry.trip))
+                }))
+                .filter((item) => Number.isFinite(item.anniversaryDistance))
+                .sort((a, b) => {
+                    if (a.anniversaryDistance !== b.anniversaryDistance) {
+                        return a.anniversaryDistance - b.anniversaryDistance;
+                    }
+
+                    const reviewDelta = (b.entry.stats.reviewCount || 0) - (a.entry.stats.reviewCount || 0);
+                    if (reviewDelta !== 0) return reviewDelta;
+
+                    const timeA = a.entry.stats.lastActivity ? new Date(a.entry.stats.lastActivity).getTime() : 0;
+                    const timeB = b.entry.stats.lastActivity ? new Date(b.entry.stats.lastActivity).getTime() : 0;
+                    return timeB - timeA;
+                });
+
+            return rankedEntries[0] || null;
+        }
+
         function renderTripCards(entries) {
             const container = document.getElementById('dateList');
             if (!container) return;
@@ -593,6 +744,7 @@
 
                 if (!trips || trips.length === 0) {
                     renderFeaturedTrip(null);
+                    renderRewindTrip(null);
                     container.innerHTML = `
                         <div class="empty-state">
                             <p>No date records yet.</p>
@@ -607,6 +759,7 @@
                     stats: createBaseTripStats()
                 }));
                 renderFeaturedTrip(null);
+                renderRewindTrip(findRewindEntry(baseEntries));
                 renderTripCards(baseEntries);
 
                 try {
@@ -696,12 +849,15 @@
                         })[0];
 
                     renderFeaturedTrip(featured);
+                    renderRewindTrip(findRewindEntry(enrichedTrips));
                     renderTripCards(enrichedTrips);
                 } catch (statsError) {
                     console.error('Non-blocking trip stats load error:', statsError);
                 }
             } catch (error) {
                 console.error('Error loading trips:', error);
+                renderFeaturedTrip(null);
+                renderRewindTrip(null);
                 container.innerHTML = `
                     <div style="text-align:center;padding:40px;color:#dc3545;">
                         Failed to load data.<br>
@@ -737,6 +893,36 @@
                 <span class="featured-trip-stat">${entry.stats.reviewCount} reviews</span>
                 <span class="featured-trip-stat">${entry.stats.averageRating != null ? `${entry.stats.averageRating.toFixed(1)}/5 avg` : 'No rating yet'}</span>
                 <span class="featured-trip-stat">${entry.stats.lastActivity ? `Updated ${formatDate(entry.stats.lastActivity)}` : 'No recent update'}</span>
+            `;
+        }
+
+        function renderRewindTrip(match) {
+            const card = document.getElementById('rewindTrip');
+            if (!card) return;
+
+            if (!match || !match.entry || !match.anchorDate) {
+                card.classList.remove('is-visible');
+                card.removeAttribute('href');
+                return;
+            }
+
+            const title = document.getElementById('rewindTripTitle');
+            const copy = document.getElementById('rewindTripCopy');
+            const stats = document.getElementById('rewindTripStats');
+            const badge = document.getElementById('rewindTripBadge');
+            const trip = match.entry.trip;
+            const tripDate = formatDate(match.anchorDate) || 'Date TBD';
+
+            card.href = `view.html?plan=${encodeURIComponent(trip.slug || '')}`;
+            card.classList.add('is-visible');
+            title.textContent = trip.title || 'Untitled trip';
+            copy.textContent = buildRewindCopy(match.entry, match.anniversaryDistance);
+            badge.textContent = match.anniversaryDistance === 0 ? 'Today' : match.anniversaryDistance <= 7 ? 'This week' : 'This season';
+            stats.innerHTML = `
+                <span class="rewind-trip-stat">${tripDate}</span>
+                <span class="rewind-trip-stat">${match.entry.stats.placeCount} places</span>
+                <span class="rewind-trip-stat">${match.entry.stats.reviewCount} reviews</span>
+                <span class="rewind-trip-stat">${match.anniversaryDistance === 0 ? 'Same calendar day' : `${match.anniversaryDistance} day${match.anniversaryDistance === 1 ? '' : 's'} away`}</span>
             `;
         }
 

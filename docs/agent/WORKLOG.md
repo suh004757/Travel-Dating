@@ -128,3 +128,12 @@ Record one entry per loop or bootstrap action.
 - checks:
   - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js,view.html,style.css`
 - residual_risk: the new summary toggle passed static checks, but live iPhone Safari interaction still has not been verified in-browser.
+
+## T-013 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html)
+- finding_home: the archive landing page highlighted only the freshest review activity, so older trips had no recurring path back into the home experience unless the couple intentionally searched for them.
+- fix_home: added a read-only `From the archive` rewind card in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L477) and wired anniversary-based selection in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L631) so one past trip close to today on the calendar is surfaced without changing backend contracts.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files index.html`
+- residual_risk: the rewind card passed static review, but its exact feel on live data still depends on the quality of stored trip dates and has not yet been observed in a real browser session.

@@ -182,3 +182,19 @@ acceptance_criteria:
 - Mobile defaults to the lighter summary state
 requires_human_if:
 - Fix requires removing existing trip data
+
+## T-013
+status: done
+risk_level: low
+goal: Add a lightweight archive rewind module on the home page so the archive gives the couple a reason to revisit older trips, not just browse the latest one.
+files: index.html
+constraints:
+- Reuse existing trip and review data only
+- Keep the home page read-only
+- Stay mobile-friendly, including iPhone-sized layouts
+acceptance_criteria:
+- The home page can surface one past trip that is close to today on the calendar
+- The module hides cleanly when usable trip dates are missing
+- The existing featured activity card and trip list continue to work
+requires_human_if:
+- Fix requires new reminder tables or notification infrastructure
