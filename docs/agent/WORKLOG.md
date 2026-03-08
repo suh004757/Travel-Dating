@@ -119,3 +119,12 @@ Record one entry per loop or bootstrap action.
 - fix_detail: changed the section heading in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L79) to `Memory snapshots`, adjusted the empty state copy, and renamed the highlight labels in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L631) to more neutral terms such as `Strong rating`, `Photo snapshot`, and `Recent reflection`.
 - checks:
   - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js,view.html`
+
+## T-012 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html), [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js), [style.css](/d:/Joon/github/Dating/Travel-Dating/style.css)
+- finding_detail: the detail page surfaced too many stats at the same depth, which made the archive feel more like a dense management screen than a readable memory page.
+- fix_detail: added a quick-glance chip row in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L36), moved the heavier summary cards and insight cards behind a toggle in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L40), and bound a responsive collapse rule in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L750) so mobile starts with the lighter summary state while desktop keeps the fuller view open.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js,view.html,style.css`
+- residual_risk: the new summary toggle passed static checks, but live iPhone Safari interaction still has not been verified in-browser.

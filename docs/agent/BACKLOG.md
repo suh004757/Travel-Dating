@@ -167,3 +167,18 @@ acceptance_criteria:
 - Empty state copy remains understandable
 requires_human_if:
 - Fix requires product terminology changes outside this flow
+
+## T-012
+status: done
+risk_level: low
+goal: Reduce perceived data density on the detail page by separating quick-glance information from optional detailed stats.
+files: view.html, app.js, style.css
+constraints:
+- Keep the same underlying trip data
+- Preserve desktop readability while reducing mobile overload
+acceptance_criteria:
+- The summary shows a lighter quick-glance layer first
+- Detailed trip stats can be expanded or collapsed
+- Mobile defaults to the lighter summary state
+requires_human_if:
+- Fix requires removing existing trip data

@@ -17,6 +17,7 @@ let currentReviewSnapshot = {
 let supabaseClient;
 const SUMMARY_SEPARATOR = ' | ';
 const MIN_POSITIVE_HIGHLIGHT_RATING = 4;
+let tripSummaryDetailsExpanded = true;
 
 const utils = window.DateScapeUtils || {};
 const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
@@ -38,6 +39,7 @@ async function init() {
         bindOverviewFilterActions();
         bindPlaceSortControl();
         bindJumpToUnreviewedAction();
+        bindTripSummaryDensityControl();
         bindAuthSync();
         bindMobileWorkspaceSwitches();
         await loadDateRecord(slug);
@@ -520,6 +522,7 @@ function renderTripSummary(places = [], stats = {}) {
     const totalPlacesEl = document.getElementById('summary-total-places');
     const avgRatingEl = document.getElementById('summary-average-rating');
     const latestReviewEl = document.getElementById('summary-latest-review');
+    const quickGlanceEl = document.getElementById('trip-quick-glance');
 
     const restaurants = places.filter((place) => (place.type || '').toLowerCase() === 'restaurant').length;
     const cafes = places.filter((place) => (place.type || '').toLowerCase() === 'cafe').length;
@@ -541,6 +544,16 @@ function renderTripSummary(places = [], stats = {}) {
     if (totalPlacesEl) totalPlacesEl.textContent = String(totalPlaces);
     if (avgRatingEl) avgRatingEl.textContent = avgRating;
     if (latestReviewEl) latestReviewEl.textContent = latestReview || '-';
+    if (quickGlanceEl) {
+        const chips = buildTripQuickGlance({
+            totalPlaces,
+            reviewedPlaces,
+            avgRating: avgRating === '-' ? null : Number(avgRating),
+            restaurants,
+            cafes
+        });
+        quickGlanceEl.innerHTML = chips.map((chip) => `<span class="trip-glance-chip">${escapeHtml(chip)}</span>`).join('');
+    }
 }
 
 function renderTripInsights(places = [], stats = {}) {
@@ -615,6 +628,21 @@ function buildTripMoodSummary(summary) {
             : 'The mix of cafes and restaurants feels evenly paced.');
 
     return `${styleLine} So far it reads as ${tone}. ${coverage}`;
+}
+
+function buildTripQuickGlance(summary) {
+    const unreviewed = Math.max(summary.totalPlaces - summary.reviewedPlaces, 0);
+    const dominantType = summary.restaurants > summary.cafes
+        ? 'Meal-heavy route'
+        : (summary.cafes > summary.restaurants ? 'Cafe-led route' : 'Balanced route');
+    const coverage = summary.totalPlaces === 0
+        ? 'No stops saved yet'
+        : (unreviewed === 0 ? 'All stops reviewed' : `${unreviewed} stop${unreviewed > 1 ? 's' : ''} still open`);
+    const quality = summary.avgRating != null
+        ? `Avg ${summary.avgRating.toFixed(1)}/5`
+        : 'No rating trend yet';
+
+    return [coverage, dominantType, quality];
 }
 
 function renderHighlights(places = [], placeStats = {}) {
@@ -715,6 +743,41 @@ function bindJumpToUnreviewedAction() {
     button.addEventListener('click', () => {
         jumpToNextUnreviewedPlace();
     });
+}
+
+function setTripSummaryDetailsVisibility(expanded) {
+    tripSummaryDetailsExpanded = expanded;
+    const details = document.getElementById('trip-summary-details');
+    const toggle = document.getElementById('trip-summary-toggle');
+    if (details) {
+        details.classList.toggle('is-collapsed', !expanded);
+    }
+    if (toggle) {
+        toggle.textContent = expanded ? 'Hide detailed trip stats' : 'Show detailed trip stats';
+        toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+}
+
+function bindTripSummaryDensityControl() {
+    const toggle = document.getElementById('trip-summary-toggle');
+    if (!toggle || window.__tripSummaryDensityBound) return;
+    window.__tripSummaryDensityBound = true;
+
+    toggle.addEventListener('click', () => {
+        setTripSummaryDetailsVisibility(!tripSummaryDetailsExpanded);
+    });
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const syncDefault = () => {
+        if (mediaQuery.matches) {
+            setTripSummaryDetailsVisibility(false);
+            return;
+        }
+        setTripSummaryDetailsVisibility(true);
+    };
+
+    syncDefault();
+    mediaQuery.addEventListener('change', syncDefault);
 }
 
 function applyPlaceTypeFilter(filter = 'all') {

@@ -33,39 +33,47 @@
                 <h2 class="trip-summary-title" id="trip-summary-title">This trip is taking shape.</h2>
                 <p class="trip-summary-text" id="trip-summary-text">Loading the places, reviews, and memories for this trip.</p>
             </div>
-            <div class="trip-summary-stats">
-                <div class="trip-summary-stat">
-                    <span class="trip-summary-label">Completion</span>
-                    <strong class="trip-summary-value" id="summary-completion-rate">0%</strong>
-                </div>
-                <div class="trip-summary-stat">
-                    <span class="trip-summary-label">Places</span>
-                    <strong class="trip-summary-value" id="summary-total-places">0</strong>
-                </div>
-                <div class="trip-summary-stat">
-                    <span class="trip-summary-label">Avg. Rating</span>
-                    <strong class="trip-summary-value" id="summary-average-rating">-</strong>
-                </div>
-                <div class="trip-summary-stat">
-                    <span class="trip-summary-label">Latest Review</span>
-                    <strong class="trip-summary-value" id="summary-latest-review">-</strong>
-                </div>
+            <div class="trip-quick-glance" id="trip-quick-glance" aria-label="Trip quick glance">
+                <span class="trip-glance-chip">Loading summary...</span>
             </div>
-            <div class="trip-insights" id="trip-insights" aria-label="Trip memory insights">
-                <div class="trip-insight-card">
-                    <span class="trip-insight-label">Captured photos</span>
-                    <strong class="trip-insight-value">0</strong>
-                    <p class="trip-insight-text">Photo memories will appear here once reviews include images.</p>
+            <div class="trip-summary-actions">
+                <button type="button" class="trip-summary-toggle" id="trip-summary-toggle" aria-expanded="true">Hide detailed trip stats</button>
+            </div>
+            <div class="trip-summary-details" id="trip-summary-details">
+                <div class="trip-summary-stats">
+                    <div class="trip-summary-stat">
+                        <span class="trip-summary-label">Completion</span>
+                        <strong class="trip-summary-value" id="summary-completion-rate">0%</strong>
+                    </div>
+                    <div class="trip-summary-stat">
+                        <span class="trip-summary-label">Places</span>
+                        <strong class="trip-summary-value" id="summary-total-places">0</strong>
+                    </div>
+                    <div class="trip-summary-stat">
+                        <span class="trip-summary-label">Avg. Rating</span>
+                        <strong class="trip-summary-value" id="summary-average-rating">-</strong>
+                    </div>
+                    <div class="trip-summary-stat">
+                        <span class="trip-summary-label">Latest Review</span>
+                        <strong class="trip-summary-value" id="summary-latest-review">-</strong>
+                    </div>
                 </div>
-                <div class="trip-insight-card">
-                    <span class="trip-insight-label">Rating-only stops</span>
-                    <strong class="trip-insight-value">0</strong>
-                    <p class="trip-insight-text">These are places with stars but no written reflection yet.</p>
-                </div>
-                <div class="trip-insight-card">
-                    <span class="trip-insight-label">Written memories</span>
-                    <strong class="trip-insight-value">0</strong>
-                    <p class="trip-insight-text">Places with at least one text review are counted here.</p>
+                <div class="trip-insights" id="trip-insights" aria-label="Trip memory insights">
+                    <div class="trip-insight-card">
+                        <span class="trip-insight-label">Captured photos</span>
+                        <strong class="trip-insight-value">0</strong>
+                        <p class="trip-insight-text">Photo memories will appear here once reviews include images.</p>
+                    </div>
+                    <div class="trip-insight-card">
+                        <span class="trip-insight-label">Rating-only stops</span>
+                        <strong class="trip-insight-value">0</strong>
+                        <p class="trip-insight-text">These are places with stars but no written reflection yet.</p>
+                    </div>
+                    <div class="trip-insight-card">
+                        <span class="trip-insight-label">Written memories</span>
+                        <strong class="trip-insight-value">0</strong>
+                        <p class="trip-insight-text">Places with at least one text review are counted here.</p>
+                    </div>
                 </div>
             </div>
         </section>
