@@ -168,8 +168,26 @@ function bindMobileWorkspaceSwitches() {
 }
 
 window.addEventListener('reviews:stats-updated', (event) => {
-    currentReviewSnapshot = Object.assign({}, currentReviewSnapshot, event?.detail || {});
-    currentReviewSnapshot.placeStats = Object.assign({}, currentReviewSnapshot.placeStats || {}, event?.detail?.placeStats || {});
+    const detail = event?.detail || {};
+    const scopePlaceIds = Array.isArray(detail.scopePlaceIds) ? detail.scopePlaceIds.map(String) : [];
+    const isFullSnapshot = currentPlaces.length === 0 || scopePlaceIds.length === 0 || scopePlaceIds.length >= currentPlaces.length;
+
+    if (isFullSnapshot) {
+        currentReviewSnapshot = Object.assign({
+            reviewCounts: {},
+            reviewedPlaceIds: [],
+            totalReviews: 0,
+            averageRating: null,
+            lastReviewAt: null,
+            placeStats: {}
+        }, detail);
+    } else {
+        currentReviewSnapshot = Object.assign({}, currentReviewSnapshot, {
+            reviewCounts: Object.assign({}, currentReviewSnapshot.reviewCounts || {}, detail.reviewCounts || {}),
+            placeStats: Object.assign({}, currentReviewSnapshot.placeStats || {}, detail.placeStats || {})
+        });
+    }
+
     decoratePlaceCards();
     setupPlaceOverview(currentPlaces, currentReviewSnapshot);
     renderTripSummary(currentPlaces, currentReviewSnapshot);

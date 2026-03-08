@@ -3,7 +3,7 @@
 Use one task per loop. The parser expects each task to start with `## T-...` and include `status:` and `risk_level:` lines.
 
 ## T-001
-status: ready
+status: done
 risk_level: low
 goal: Run a review-first pass against the current home, detail, and review flows and capture concrete defects before new feature work.
 files: index.html, view.html, app.js, components/reviews.js, style.css
@@ -20,7 +20,7 @@ requires_human_if:
 - Findings imply data migration or policy change
 
 ## T-002
-status: ready
+status: done
 risk_level: low
 goal: Harden the detail page regression surface around empty states, auth-gated actions, and mobile panel transitions.
 files: view.html, app.js, components/reviews.js, style.css
@@ -35,7 +35,7 @@ requires_human_if:
 - Fix requires new backend fields
 
 ## T-003
-status: ready
+status: done
 risk_level: medium
 goal: Improve the home archive cards only if regressions from T-001 are clear, otherwise defer and log why.
 files: index.html
@@ -47,3 +47,78 @@ acceptance_criteria:
 - No syntax or rendering regressions are introduced
 requires_human_if:
 - Fix requires changing trip or place schema
+
+## T-004
+status: ready
+risk_level: low
+goal: Fix detail-page metadata formatting defects and remove any corrupted separator output in place summaries and highlight cards.
+files: app.js
+constraints:
+- Keep the current summary and highlight structure
+- Do not add backend dependencies
+acceptance_criteria:
+- Place review summary text uses a stable readable separator
+- Highlight metadata uses the same stable separator
+- No broken characters remain in the touched strings
+requires_human_if:
+- Fix requires changing stored data encoding
+
+## T-005
+status: ready
+risk_level: low
+goal: Add a compact memory insights strip to the detail summary using existing review and photo statistics.
+files: view.html, app.js, style.css
+constraints:
+- Reuse existing derived review stats only
+- Keep the detail page layout readable on mobile
+acceptance_criteria:
+- The detail page shows extra quick stats for captured photos and rating-only stops
+- Empty data still renders cleanly
+- No existing summary cards regress
+requires_human_if:
+- Fix requires new backend fields
+
+## T-006
+status: ready
+risk_level: low
+goal: Add a fast path from the detail page to the next unreviewed place so operators can keep filling gaps quickly.
+files: view.html, app.js, style.css
+constraints:
+- Work with current filtering and sorting
+- Do not change the review modal flow
+acceptance_criteria:
+- A clear jump action exists when at least one place is unreviewed
+- The action targets the first currently relevant unreviewed card
+- The button hides when every place has a review
+requires_human_if:
+- Fix requires changing review ownership rules
+
+## T-007
+status: ready
+risk_level: low
+goal: Add a home archive search input that filters trip cards by title, subtitle, and status-facing text.
+files: index.html
+constraints:
+- Keep the archive read-first
+- Do not add external dependencies
+acceptance_criteria:
+- Users can filter trip cards with a text query
+- Empty filter results show a friendly message
+- Featured trip behavior stays intact
+requires_human_if:
+- Fix requires server-side search
+
+## T-008
+status: ready
+risk_level: low
+goal: Add a top-level archive stats strip on the home page so the archive reads like a dashboard rather than a raw list.
+files: index.html
+constraints:
+- Use existing loaded trip/place/review data only
+- Keep the section lightweight and mobile-safe
+acceptance_criteria:
+- Home page shows total trips, total places, total reviews, and average rating
+- Values stay consistent with the loaded archive data
+- Empty state still renders cleanly
+requires_human_if:
+- Fix requires new aggregate API endpoints

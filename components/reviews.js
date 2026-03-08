@@ -64,6 +64,15 @@ function pickStar(containerId, value) {
 }
 
 async function loadPlaceReviews(placeId) {
+    const allRenderedPlaceIds = Array.from(document.querySelectorAll('.place-card'))
+        .map((card) => card?.dataset?.placeId)
+        .filter(Boolean);
+
+    if (allRenderedPlaceIds.length > 1) {
+        await loadPlaceReviewsForPlaces(allRenderedPlaceIds.map((id) => ({ id })));
+        return;
+    }
+
     await loadPlaceReviewsForPlaces([{ id: placeId }]);
 }
 
@@ -115,6 +124,7 @@ async function loadPlaceReviewsForPlaces(places) {
 
         const detail = buildReviewStats(placeIds, placeReviews, photoMap);
         detail.currentUserId = user?.id || null;
+        detail.scopePlaceIds = placeIds;
         window.__placeReviewCounts = Object.assign({}, detail.reviewCounts);
         window.__placeReviewStats = Object.assign({}, detail.placeStats);
 
@@ -140,7 +150,8 @@ async function loadPlaceReviewsForPlaces(places) {
                 totalReviews: 0,
                 averageRating: null,
                 lastReviewAt: null,
-                placeStats: {}
+                placeStats: {},
+                scopePlaceIds: placeIds
             }
         }));
     }

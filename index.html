@@ -537,7 +537,7 @@
                 if (placeIds.length > 0) {
                     const { data: reviewData, error: reviewError } = await supabaseClient
                         .from('reviews')
-                        .select('place_id, rating, created_at')
+                        .select('place_id, rating, created_at, updated_at')
                         .in('place_id', placeIds);
 
                     if (reviewError) throw reviewError;
@@ -561,10 +561,11 @@
                     if (Number(review.rating) > 0) {
                         stats.ratings.push(Number(review.rating));
                     }
-                    if (review.created_at) {
-                        const created = new Date(review.created_at);
-                        if (!stats.lastActivity || created > stats.lastActivity) {
-                            stats.lastActivity = created;
+                    const activityAt = review.updated_at || review.created_at;
+                    if (activityAt) {
+                        const activityDate = new Date(activityAt);
+                        if (!stats.lastActivity || activityDate > stats.lastActivity) {
+                            stats.lastActivity = activityDate;
                         }
                     }
                 });
@@ -587,6 +588,7 @@
                 });
 
                 const featured = [...enrichedTrips]
+                    .filter((entry) => entry.stats.reviewCount > 0)
                     .sort((a, b) => {
                         const timeA = a.stats.lastActivity ? a.stats.lastActivity.getTime() : 0;
                         const timeB = b.stats.lastActivity ? b.stats.lastActivity.getTime() : 0;
@@ -608,7 +610,13 @@
 
         function renderFeaturedTrip(entry) {
             const card = document.getElementById('featuredTrip');
-            if (!card || !entry) return;
+            if (!card) return;
+
+            if (!entry || entry.stats.reviewCount === 0 || !entry.stats.lastActivity) {
+                card.classList.remove('is-visible');
+                card.removeAttribute('href');
+                return;
+            }
 
             const status = getTripStatus(entry.stats);
             const title = document.getElementById('featuredTripTitle');

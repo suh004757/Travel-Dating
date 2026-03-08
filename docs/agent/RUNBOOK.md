@@ -36,3 +36,10 @@ Each loop should leave behind:
 - A worklog entry
 - Updated task status
 - Clear remaining risks
+
+## Continuous Mode
+Use `scripts/agent-daemon.ps1` when you want the workspace to keep polling for the next ready task.
+
+- The daemon is safe by default because it does not bypass review gates.
+- It prepares one loop at a time and waits for the external coding agent to execute the prompt.
+- Create `docs/agent/STOP` to stop the daemon cleanly.
