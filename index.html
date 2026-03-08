@@ -11,7 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .hub-container {
-            max-width: 800px;
+            max-width: 960px;
             margin: 0 auto;
             padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
@@ -19,18 +19,18 @@
 
         .hub-header {
             text-align: center;
-            margin-bottom: 40px;
-            padding: 40px 20px;
-            background: linear-gradient(135deg, #fff5f7 0%, #fff 100%);
-            border-radius: 20px;
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.1);
+            margin-bottom: 28px;
+            padding: 48px 24px;
+            background: linear-gradient(135deg, #fff5f7 0%, #fff 55%, #ffe5ee 100%);
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(255, 107, 157, 0.12);
         }
 
         .hub-header h1 {
             color: #ff6b9d;
             margin: 0;
-            font-size: 1.8rem;
-            line-height: 1.4;
+            font-size: 2rem;
+            line-height: 1.2;
         }
 
         .hub-header .subtext {
@@ -39,29 +39,114 @@
             font-size: 1rem;
         }
 
-        .d-day-badge {
-            margin-top: 20px;
-            display: inline-block;
-            background: white;
-            padding: 10px 25px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
+        .hub-intro {
+            margin: 14px auto 0;
+            max-width: 560px;
+            color: #666;
+            font-size: 0.96rem;
         }
 
-        .d-day-label { color: #666; font-size: 0.9rem; }
-        .d-day-count { color: #ff6b9d; font-size: 1.2rem; font-weight: bold; margin-left: 8px; }
+        .d-day-badge {
+            margin-top: 22px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 10px 22px;
+            border-radius: 999px;
+            box-shadow: 0 6px 18px rgba(255, 107, 157, 0.18);
+        }
+
+        .d-day-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .d-day-count {
+            color: #ff6b9d;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .featured-trip {
+            display: none;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 16px;
+            background: linear-gradient(135deg, #ff6b9d, #c44569);
+            color: white;
+            border-radius: 22px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 24px rgba(196, 69, 105, 0.24);
+            text-decoration: none;
+        }
+
+        .featured-trip.is-visible {
+            display: grid;
+        }
+
+        .featured-trip-kicker {
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.82;
+            margin-bottom: 8px;
+        }
+
+        .featured-trip-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .featured-trip-copy {
+            color: rgba(255, 255, 255, 0.9);
+            max-width: 560px;
+        }
+
+        .featured-trip-stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .featured-trip-stat {
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.85rem;
+        }
+
+        .featured-trip-badge {
+            align-self: start;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
 
         .dates-toolbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 16px;
         }
 
         .dates-toolbar h2 {
             color: #333;
-            font-size: 1.3rem;
+            font-size: 1.25rem;
             margin: 0;
+        }
+
+        .dates-toolbar p {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 4px;
         }
 
         .add-date-btn {
@@ -90,26 +175,29 @@
 
         .date-card {
             display: flex;
+            gap: 16px;
             background: white;
-            border-radius: 16px;
+            border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
             transition: transform 0.2s, box-shadow 0.2s;
             text-decoration: none;
             color: inherit;
-            border: 1px solid #f0f0f0;
+            border: 1px solid #f3d8e2;
+            padding: 18px;
         }
 
         .date-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.15);
+            box-shadow: 0 12px 28px rgba(255, 107, 157, 0.16);
             border-color: #ffb3c9;
         }
 
         .card-emoji {
-            width: 80px;
-            min-height: 80px;
-            background: #fff5f7;
+            width: 84px;
+            min-height: 84px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #fff5f7, #ffe7ef);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -118,20 +206,52 @@
         }
 
         .card-body {
-            padding: 16px 20px;
             flex: 1;
             min-width: 0;
+        }
+
+        .card-topline {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 6px;
+            flex-wrap: wrap;
         }
 
         .card-date-range {
             color: #ff6b9d;
             font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 4px;
+            font-weight: 700;
+        }
+
+        .card-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .card-status--starting {
+            background: #fff1d6;
+            color: #996515;
+        }
+
+        .card-status--in-progress {
+            background: #e8f0ff;
+            color: #24539e;
+        }
+
+        .card-status--complete {
+            background: #e6f7ef;
+            color: #1f7a45;
         }
 
         .card-title {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #333;
             margin-bottom: 4px;
@@ -139,16 +259,30 @@
 
         .card-subtitle {
             color: #888;
-            font-size: 0.9rem;
-            line-height: 1.4;
+            font-size: 0.92rem;
+            line-height: 1.45;
         }
 
         .card-meta {
-            margin-top: 8px;
+            margin-top: 14px;
             display: flex;
-            gap: 12px;
-            font-size: 0.8rem;
-            color: #aaa;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .card-meta-chip {
+            background: #fff5f7;
+            color: #80505f;
+            border-radius: 999px;
+            padding: 7px 10px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .card-summary {
+            margin-top: 12px;
+            font-size: 0.88rem;
+            color: #666;
         }
 
         .loading {
@@ -163,13 +297,50 @@
             color: #999;
         }
 
-        .empty-state p { margin-bottom: 8px; }
+        .empty-state p {
+            margin-bottom: 8px;
+        }
 
-        @media (max-width: 600px) {
-            .hub-container { padding: 10px; }
-            .hub-header h1 { font-size: 1.5rem; }
-            .card-emoji { width: 60px; font-size: 1.5rem; }
-            .card-body { padding: 12px 14px; }
+        @media (max-width: 720px) {
+            .hub-container {
+                padding: 12px;
+            }
+
+            .hub-header {
+                padding: 34px 18px;
+            }
+
+            .hub-header h1 {
+                font-size: 1.6rem;
+            }
+
+            .featured-trip,
+            .date-card {
+                grid-template-columns: 1fr;
+                display: block;
+            }
+
+            .featured-trip-badge {
+                margin-top: 10px;
+                display: inline-flex;
+            }
+
+            .date-card {
+                padding: 14px;
+            }
+
+            .card-emoji {
+                width: 64px;
+                min-height: 64px;
+                border-radius: 14px;
+                font-size: 1.5rem;
+                margin-bottom: 12px;
+            }
+
+            .dates-toolbar {
+                align-items: flex-start;
+                gap: 12px;
+            }
         }
     </style>
 </head>
@@ -181,30 +352,28 @@
         <header class="hub-header">
             <h1>Our Date Memories</h1>
             <p class="subtext">JOON & YOUNGAH'S WORLD TOUR</p>
+            <p class="hub-intro">A shared archive of places, reflections, and little snapshots from each trip together.</p>
             <div class="d-day-badge">
                 <span class="d-day-label">Days together</span>
                 <span class="d-day-count" id="d-day-count">D+1</span>
             </div>
         </header>
 
-        <script>
-            const START_DATE = '2026-01-20';
-            const RECORD_CREATION_ENABLED = false;
-            function updateDDay() {
-                const start = new Date(START_DATE);
-                const today = new Date();
-                start.setHours(0, 0, 0, 0);
-                today.setHours(0, 0, 0, 0);
-                const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
-                const el = document.getElementById('d-day-count');
-                if (!el) return;
-                el.textContent = diffDays >= 1 ? `D+${diffDays}` : `D-${Math.ceil(Math.abs(today - start) / (1000 * 60 * 60 * 24))}`;
-            }
-            document.addEventListener('DOMContentLoaded', updateDDay);
-        </script>
+        <a id="featuredTrip" class="featured-trip" href="#">
+            <div>
+                <p class="featured-trip-kicker">Most active memory</p>
+                <div class="featured-trip-title" id="featuredTripTitle">Loading...</div>
+                <p class="featured-trip-copy" id="featuredTripCopy">The latest trip with new reviews and photos will be highlighted here.</p>
+                <div class="featured-trip-stats" id="featuredTripStats"></div>
+            </div>
+            <div class="featured-trip-badge" id="featuredTripBadge">Reviewing</div>
+        </a>
 
         <div class="dates-toolbar">
-            <h2>Date Records</h2>
+            <div>
+                <h2>Date Records</h2>
+                <p>Each record captures the route, the reviews, and the mood of the trip.</p>
+            </div>
             <button class="add-date-btn" id="addDateBtn" style="display:none;" onclick="showNewDateModal()">+ New Record</button>
         </div>
 
@@ -213,7 +382,6 @@
         </div>
     </div>
 
-    <!-- New Date Record Modal -->
     <div id="new-date-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeNewDateModal()">&times;</span>
@@ -251,22 +419,33 @@
         </div>
     </div>
 
+    <script>
+        const START_DATE = '2026-01-20';
+        const RECORD_CREATION_ENABLED = false;
+
+        function updateDDay() {
+            const start = new Date(START_DATE);
+            const today = new Date();
+            start.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+            const diffDays = Math.floor((today - start) / (1000 * 60 * 60 * 24)) + 1;
+            const el = document.getElementById('d-day-count');
+            if (!el) return;
+            el.textContent = diffDays >= 1 ? `D+${diffDays}` : `D-${Math.ceil(Math.abs(today - start) / (1000 * 60 * 60 * 24))}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', updateDDay);
+    </script>
+
     <script src="config.js"></script>
+    <script src="components/utils.js"></script>
     <script src="components/auth.js"></script>
     <script>
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        const utils = window.DateScapeUtils || {};
+        const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
 
-        function escapeHtml(value) {
-            return String(value ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        // Show add button only for logged-in users
         async function checkAuth() {
             const { data: { user } } = await supabaseClient.auth.getUser();
             const btn = document.getElementById('addDateBtn');
@@ -280,14 +459,47 @@
             btn.style.display = user ? 'inline-block' : 'none';
         }
 
+        window.addEventListener('auth-state-changed', () => {
+            checkAuth().catch(() => {});
+        });
+
+        function formatDate(value) {
+            if (!value) return '';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            return date.toLocaleDateString('ko-KR');
+        }
+
+        function getTripStatus(stats) {
+            if (stats.placeCount === 0 || stats.reviewCount === 0) {
+                return { label: 'Record Start', className: 'card-status card-status--starting' };
+            }
+            if (stats.reviewedPlaceCount >= stats.placeCount) {
+                return { label: 'Memory Complete', className: 'card-status card-status--complete' };
+            }
+            return { label: 'Reviewing', className: 'card-status card-status--in-progress' };
+        }
+
+        function buildTripSummaryLine(stats) {
+            if (stats.placeCount === 0) {
+                return 'No places saved yet.';
+            }
+            if (stats.reviewCount === 0) {
+                return 'Places are saved, but the reflections have not started yet.';
+            }
+            if (stats.reviewedPlaceCount >= stats.placeCount) {
+                return 'Every stop has at least one review attached.';
+            }
+            return `${stats.placeCount - stats.reviewedPlaceCount} place${stats.placeCount - stats.reviewedPlaceCount > 1 ? 's are' : ' is'} still waiting for a review.`;
+        }
+
         async function loadTrips() {
             const container = document.getElementById('dateList');
 
             try {
-                // Load trips with place count
                 const { data: trips, error } = await supabaseClient
                     .from('trips')
-                    .select('*, places(count)')
+                    .select('*')
                     .order('start_date', { ascending: false });
 
                 if (error) throw error;
@@ -304,7 +516,85 @@
                     return;
                 }
 
-                trips.forEach(trip => container.appendChild(createTripCard(trip)));
+                const tripIds = trips.map((trip) => trip.id);
+                const { data: places, error: placesError } = await supabaseClient
+                    .from('places')
+                    .select('id, trip_id')
+                    .in('trip_id', tripIds);
+
+                if (placesError) throw placesError;
+
+                const placesByTrip = Object.create(null);
+                const placeIdToTripId = Object.create(null);
+                (places || []).forEach((place) => {
+                    if (!placesByTrip[place.trip_id]) placesByTrip[place.trip_id] = [];
+                    placesByTrip[place.trip_id].push(place.id);
+                    placeIdToTripId[place.id] = place.trip_id;
+                });
+
+                const placeIds = (places || []).map((place) => place.id);
+                let reviews = [];
+                if (placeIds.length > 0) {
+                    const { data: reviewData, error: reviewError } = await supabaseClient
+                        .from('reviews')
+                        .select('place_id, rating, created_at')
+                        .in('place_id', placeIds);
+
+                    if (reviewError) throw reviewError;
+                    reviews = reviewData || [];
+                }
+
+                const statsByTrip = Object.fromEntries(trips.map((trip) => [trip.id, {
+                    placeCount: (placesByTrip[trip.id] || []).length,
+                    reviewCount: 0,
+                    reviewedPlaceIds: new Set(),
+                    ratings: [],
+                    lastActivity: null
+                }]));
+
+                reviews.forEach((review) => {
+                    const tripId = placeIdToTripId[review.place_id];
+                    const stats = statsByTrip[tripId];
+                    if (!stats) return;
+                    stats.reviewCount += 1;
+                    stats.reviewedPlaceIds.add(review.place_id);
+                    if (Number(review.rating) > 0) {
+                        stats.ratings.push(Number(review.rating));
+                    }
+                    if (review.created_at) {
+                        const created = new Date(review.created_at);
+                        if (!stats.lastActivity || created > stats.lastActivity) {
+                            stats.lastActivity = created;
+                        }
+                    }
+                });
+
+                const enrichedTrips = trips.map((trip) => {
+                    const stats = statsByTrip[trip.id];
+                    const avgRating = stats.ratings.length > 0
+                        ? stats.ratings.reduce((sum, rating) => sum + rating, 0) / stats.ratings.length
+                        : null;
+                    return {
+                        trip,
+                        stats: {
+                            placeCount: stats.placeCount,
+                            reviewCount: stats.reviewCount,
+                            reviewedPlaceCount: stats.reviewedPlaceIds.size,
+                            averageRating: avgRating,
+                            lastActivity: stats.lastActivity
+                        }
+                    };
+                });
+
+                const featured = [...enrichedTrips]
+                    .sort((a, b) => {
+                        const timeA = a.stats.lastActivity ? a.stats.lastActivity.getTime() : 0;
+                        const timeB = b.stats.lastActivity ? b.stats.lastActivity.getTime() : 0;
+                        return timeB - timeA;
+                    })[0];
+
+                renderFeaturedTrip(featured);
+                enrichedTrips.forEach((entry) => container.appendChild(createTripCard(entry.trip, entry.stats)));
             } catch (error) {
                 console.error('Error loading trips:', error);
                 container.innerHTML = `
@@ -316,33 +606,63 @@
             }
         }
 
-        function createTripCard(trip) {
+        function renderFeaturedTrip(entry) {
+            const card = document.getElementById('featuredTrip');
+            if (!card || !entry) return;
+
+            const status = getTripStatus(entry.stats);
+            const title = document.getElementById('featuredTripTitle');
+            const copy = document.getElementById('featuredTripCopy');
+            const stats = document.getElementById('featuredTripStats');
+            const badge = document.getElementById('featuredTripBadge');
+
+            card.href = `view.html?plan=${encodeURIComponent(entry.trip.slug || '')}`;
+            card.classList.add('is-visible');
+            title.textContent = entry.trip.title || 'Untitled trip';
+            copy.textContent = buildTripSummaryLine(entry.stats);
+            badge.textContent = status.label;
+            stats.innerHTML = `
+                <span class="featured-trip-stat">${entry.stats.placeCount} places</span>
+                <span class="featured-trip-stat">${entry.stats.reviewCount} reviews</span>
+                <span class="featured-trip-stat">${entry.stats.averageRating != null ? `${entry.stats.averageRating.toFixed(1)}/5 avg` : 'No rating yet'}</span>
+                <span class="featured-trip-stat">${entry.stats.lastActivity ? `Updated ${formatDate(entry.stats.lastActivity)}` : 'No recent update'}</span>
+            `;
+        }
+
+        function createTripCard(trip, stats) {
             const card = document.createElement('a');
             card.href = `view.html?plan=${encodeURIComponent(trip.slug || '')}`;
             card.className = 'date-card';
 
-            const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('ko-KR') : '';
-            const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('ko-KR') : '';
+            const status = getTripStatus(stats);
+            const startDate = trip.start_date ? formatDate(trip.start_date) : '';
+            const endDate = trip.end_date ? formatDate(trip.end_date) : '';
             const dateRange = startDate && endDate ? `${startDate} ~ ${endDate}` : startDate || 'Date TBD';
-
-            const placeCount = trip.places?.[0]?.count || 0;
+            const averageRatingLabel = stats.averageRating != null ? `${stats.averageRating.toFixed(1)}/5 avg` : 'No rating yet';
+            const updatedLabel = stats.lastActivity ? formatDate(stats.lastActivity) : 'No review yet';
 
             card.innerHTML = `
                 <div class="card-emoji">${escapeHtml(trip.emoji || 'D')}</div>
                 <div class="card-body">
-                    <div class="card-date-range">${dateRange}</div>
-                    <div class="card-title">${escapeHtml(trip.title || '')}</div>
-                    <div class="card-subtitle">${escapeHtml(trip.subtitle || '')}</div>
-                    <div class="card-meta">
-                        <span>${placeCount} places</span>
+                    <div class="card-topline">
+                        <div class="card-date-range">${dateRange}</div>
+                        <span class="${status.className}">${status.label}</span>
                     </div>
+                    <div class="card-title">${escapeHtml(trip.title || '')}</div>
+                    <div class="card-subtitle">${escapeHtml(trip.subtitle || 'A shared trip memory waiting to be filled in.')}</div>
+                    <div class="card-meta">
+                        <span class="card-meta-chip">${stats.placeCount} places</span>
+                        <span class="card-meta-chip">${stats.reviewCount} reviews</span>
+                        <span class="card-meta-chip">${averageRatingLabel}</span>
+                        <span class="card-meta-chip">Updated ${updatedLabel}</span>
+                    </div>
+                    <div class="card-summary">${buildTripSummaryLine(stats)}</div>
                 </div>
             `;
 
             return card;
         }
 
-        // New Date Record
         function showNewDateModal() {
             if (!RECORD_CREATION_ENABLED) {
                 alert('New record creation is temporarily disabled.');
@@ -379,7 +699,6 @@
             const baseLat = parseFloat(document.getElementById('nd-base-lat').value) || 37.5665;
             const baseLng = parseFloat(document.getElementById('nd-base-lng').value) || 126.9780;
 
-            // Generate slug from title
             const slug = title.toLowerCase()
                 .replace(/[^a-z0-9\s_-]/g, '')
                 .replace(/\s+/g, '_')

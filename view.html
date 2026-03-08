@@ -27,16 +27,53 @@
             <p class="subtitle" id="page-dates"></p>
         </header>
 
-        <div id="weather-widget" class="weather-widget"></div>
-
-        <div class="review-workspace">
-            <div class="map-section" id="mobile-panel-map" data-mobile-section="map">
-                <button type="button" id="mobile-back-to-places-btn" class="mobile-map-toggle-btn" data-mobile-view="places" aria-controls="mobile-panel-places" hidden>← Back to places</button>
-                <div class="map-container">
-                    <div id="map"></div>
+        <section class="trip-summary" id="trip-summary" aria-label="Trip summary">
+            <div class="trip-summary-copy">
+                <p class="trip-summary-kicker">Memory Dashboard</p>
+                <h2 class="trip-summary-title" id="trip-summary-title">This trip is taking shape.</h2>
+                <p class="trip-summary-text" id="trip-summary-text">Loading the places, reviews, and memories for this trip.</p>
+            </div>
+            <div class="trip-summary-stats">
+                <div class="trip-summary-stat">
+                    <span class="trip-summary-label">Completion</span>
+                    <strong class="trip-summary-value" id="summary-completion-rate">0%</strong>
+                </div>
+                <div class="trip-summary-stat">
+                    <span class="trip-summary-label">Places</span>
+                    <strong class="trip-summary-value" id="summary-total-places">0</strong>
+                </div>
+                <div class="trip-summary-stat">
+                    <span class="trip-summary-label">Avg. Rating</span>
+                    <strong class="trip-summary-value" id="summary-average-rating">-</strong>
+                </div>
+                <div class="trip-summary-stat">
+                    <span class="trip-summary-label">Latest Review</span>
+                    <strong class="trip-summary-value" id="summary-latest-review">-</strong>
                 </div>
             </div>
+        </section>
 
+        <div id="weather-widget" class="weather-widget"></div>
+
+        <section class="memory-highlights" aria-label="Memory highlights">
+            <div class="memory-highlights-head">
+                <div>
+                    <p class="memory-highlights-kicker">Highlights</p>
+                    <h2 class="section-heading">Moments worth revisiting</h2>
+                </div>
+            </div>
+            <div class="memory-highlights-grid" id="memory-highlights-grid">
+                <div class="memory-highlight-empty">Highlights will appear once reviews and photos are added.</div>
+            </div>
+        </section>
+
+        <div class="mobile-workspace-tabs" role="tablist" aria-label="Trip detail sections" hidden>
+            <button type="button" class="mobile-workspace-tab is-active" data-mobile-view="overview" role="tab" aria-selected="true">Overview</button>
+            <button type="button" class="mobile-workspace-tab" data-mobile-view="places" role="tab" aria-selected="false">Places</button>
+            <button type="button" class="mobile-workspace-tab" data-mobile-view="map" role="tab" aria-selected="false">Map</button>
+        </div>
+
+        <div class="review-workspace">
             <aside class="overview-panel" id="mobile-panel-overview" aria-label="Trip overview" data-mobile-section="overview">
                 <div class="section-heading overview-title" id="overview-title-heading">Trip Overview</div>
                 <div id="overview-stats" class="overview-stats">
@@ -66,7 +103,7 @@
                     </div>
                     <div class="overview-card">
                         <p class="overview-label">Avg. Rating</p>
-                        <p class="overview-value" id="overview-avg-rating">0.0</p>
+                        <p class="overview-value" id="overview-avg-rating">-</p>
                     </div>
                     <div class="overview-card">
                         <p class="overview-label">Latest Review</p>
@@ -79,33 +116,54 @@
                 </div>
 
                 <div class="overview-filter">
-                    <p class="overview-filter-title">Filter by type</p>
-                    <div class="overview-filter-actions" role="group" aria-label="Place type filter">
+                    <p class="overview-filter-title">Filter places</p>
+                    <div class="overview-filter-actions" role="group" aria-label="Place filter">
                         <button class="overview-filter-btn is-active" type="button" data-filter="all">All</button>
                         <button class="overview-filter-btn" type="button" data-filter="restaurant">Restaurant</button>
                         <button class="overview-filter-btn" type="button" data-filter="cafe">Cafe</button>
+                        <button class="overview-filter-btn" type="button" data-filter="reviewed">Reviewed</button>
+                        <button class="overview-filter-btn" type="button" data-filter="unreviewed">Unreviewed</button>
                     </div>
                 </div>
 
                 <div class="overview-help">
                     <p class="overview-help-title">Tip</p>
-                    <p>Tap a card to write a review after login. Scroll list if content is long.</p>
+                    <p>Use the filters and sort menu to focus on missing reviews first, then switch to the map or highlights when needed.</p>
                 </div>
             </aside>
 
             <div class="places-section" id="mobile-panel-places" data-mobile-section="places">
                 <div class="places-header">
                     <h2 class="section-heading">Places We Visited</h2>
-                    <button type="button" id="mobile-show-map-btn" class="mobile-map-toggle-btn" data-mobile-view="map" aria-controls="mobile-panel-map">Show map</button>
-                    <button id="add-place-btn" class="add-place-btn" style="display:none;" onclick="showAddPlaceModal()">+ Add Place</button>
+                    <div class="places-header-actions">
+                        <select id="place-sort-select" class="place-sort-select" aria-label="Sort places">
+                            <option value="review-status">Needs review first</option>
+                            <option value="name">Name</option>
+                            <option value="rating">Highest rated</option>
+                            <option value="recent">Latest review</option>
+                        </select>
+                        <button type="button" id="mobile-show-map-btn" class="mobile-map-toggle-btn" data-mobile-view="map" aria-controls="mobile-panel-map">Show map</button>
+                        <button type="button" id="mobile-show-overview-btn" class="mobile-map-toggle-btn" data-mobile-view="overview" aria-controls="mobile-panel-overview">Overview</button>
+                        <button id="add-place-btn" class="add-place-btn" style="display:none;" onclick="showAddPlaceModal()">+ Add Place</button>
+                    </div>
                 </div>
                 <div class="mobile-place-filters">
                     <button class="overview-filter-btn is-active" type="button" data-filter="all">All</button>
                     <button class="overview-filter-btn" type="button" data-filter="restaurant">Restaurant</button>
                     <button class="overview-filter-btn" type="button" data-filter="cafe">Cafe</button>
+                    <button class="overview-filter-btn" type="button" data-filter="reviewed">Reviewed</button>
+                    <button class="overview-filter-btn" type="button" data-filter="unreviewed">Unreviewed</button>
                 </div>
                 <div id="places-list" class="places-list">
                     <div class="loading">Loading places...</div>
+                </div>
+                <div id="places-filter-empty" class="places-empty" hidden>No places match the current filter yet.</div>
+            </div>
+
+            <div class="map-section" id="mobile-panel-map" data-mobile-section="map">
+                <button type="button" id="mobile-back-to-overview-btn" class="mobile-map-toggle-btn" data-mobile-view="overview" aria-controls="mobile-panel-overview" hidden>Back to overview</button>
+                <div class="map-container">
+                    <div id="map"></div>
                 </div>
             </div>
         </div>
@@ -116,6 +174,7 @@
     </div>
 
     <script src="config.js"></script>
+    <script src="components/utils.js"></script>
     <script src="components/auth.js"></script>
     <script src="components/reviews.js"></script>
     <script src="components/weather.js"></script>

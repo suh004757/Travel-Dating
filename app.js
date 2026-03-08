@@ -1,73 +1,54 @@
-// DateScape - Date Record Viewer
-// Loads a date record (trip) with places and reviews
+// DateScape - Memory dashboard for a single trip
 
 let map;
 let markers = [];
 let currentTrip = null;
 let currentPlaces = [];
 let currentPlaceTypeFilter = 'all';
+let currentPlaceSort = 'review-status';
+let currentReviewSnapshot = {
+    reviewCounts: {},
+    reviewedPlaceIds: [],
+    totalReviews: 0,
+    averageRating: null,
+    lastReviewAt: null,
+    placeStats: {}
+};
 let supabaseClient;
 
-function escapeHtml(value) {
-    return String(value ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
+const utils = window.DateScapeUtils || {};
+const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
+const sanitizeExternalUrl = utils.sanitizeExternalUrl || ((value) => String(value ?? ''));
+const formatDate = utils.formatDate || ((value, locale = 'ko-KR', options) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString(locale, options);
+});
 
-function sanitizeExternalUrl(value) {
-    if (!value) return '';
-
-    try {
-        const url = new URL(String(value), window.location.origin);
-        const allowedProtocols = new Set(['http:', 'https:']);
-        if (!allowedProtocols.has(url.protocol)) {
-            return '';
-        }
-        return url.href;
-    } catch {
-        return '';
-    }
-}
-
-// Initialize Supabase
 const { createClient } = supabase;
 supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
 
-// Main initialization
 async function init() {
     const urlParams = new URLSearchParams(window.location.search);
     const slug = urlParams.get('plan') || 'daejeon_feb_2026';
 
     try {
-        await loadDateRecord(slug);
         bindOverviewFilterActions();
-        setupPlaceOverview(currentPlaces);
-        showAddPlaceButton();
+        bindPlaceSortControl();
         bindAuthSync();
         bindMobileWorkspaceSwitches();
+        await loadDateRecord(slug);
+        await showAddPlaceButton();
     } catch (error) {
         showError('Failed to load date record: ' + error.message);
     }
 }
 
-// Show "Add Place" button only for logged-in users
 async function showAddPlaceButton() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     const btn = document.getElementById('add-place-btn');
     if (btn) {
-        btn.style.display = user ? 'inline-block' : 'none';
+        btn.style.display = user ? 'inline-flex' : 'none';
     }
-}
-
-function refreshAllReviewPanels() {
-    if (!window.loadPlaceReviews) return;
-    document.querySelectorAll('.reviews-container[id^="reviews-"]').forEach((container) => {
-        const placeId = container.id.replace('reviews-', '');
-        loadPlaceReviews(placeId);
-    });
 }
 
 function bindAuthSync() {
@@ -75,7 +56,9 @@ function bindAuthSync() {
     window.__dateScapeAuthSyncBound = true;
     window.addEventListener('auth-state-changed', async () => {
         await showAddPlaceButton();
-        refreshAllReviewPanels();
+        if (currentPlaces.length > 0 && typeof loadPlaceReviewsForPlaces === 'function') {
+            await loadPlaceReviewsForPlaces(currentPlaces);
+        }
     });
 }
 
@@ -84,32 +67,26 @@ function setMobileWorkspaceMode(mode) {
     const tabs = document.querySelector('.mobile-workspace-tabs');
     if (!workspace) return;
 
-    const target = mode || (workspace.dataset.defaultMobileMode || 'places');
-    const validModes = ['map', 'places'];
-    const nextMode = validModes.includes(target) ? target : 'places';
+    const validModes = ['overview', 'places', 'map'];
+    const nextMode = validModes.includes(mode) ? mode : 'overview';
     const isMobileMode = workspace.classList.contains('mobile-mode');
-
     const sections = {
-        map: workspace.querySelector('[data-mobile-section="map"]'),
-        places: workspace.querySelector('[data-mobile-section="places"]')
+        overview: workspace.querySelector('[data-mobile-section="overview"]'),
+        places: workspace.querySelector('[data-mobile-section="places"]'),
+        map: workspace.querySelector('[data-mobile-section="map"]')
     };
 
     if (tabs) {
-        const activeTab = tabs.querySelector(`.mobile-workspace-tab[data-mobile-view="${nextMode}"]`);
         tabs.querySelectorAll('.mobile-workspace-tab').forEach((button) => {
             const isActive = button.dataset.mobileView === nextMode;
-            const targetPanel = button.dataset.mobileView;
+            const targetSection = sections[button.dataset.mobileView];
             button.classList.toggle('is-active', isActive);
             button.setAttribute('aria-selected', isActive ? 'true' : 'false');
             button.setAttribute('tabindex', isActive ? '0' : '-1');
-            const targetSection = workspace.querySelector(`[data-mobile-section="${targetPanel}"]`);
             if (targetSection) {
                 button.setAttribute('aria-controls', targetSection.id || '');
             }
         });
-        if (activeTab) {
-            activeTab.setAttribute('tabindex', '0');
-        }
     }
 
     Object.entries(sections).forEach(([sectionMode, section]) => {
@@ -124,16 +101,19 @@ function setMobileWorkspaceMode(mode) {
     });
 
     workspace.dataset.mobileMode = nextMode;
-    workspace.dataset.defaultMobileMode = nextMode;
     window.__dateScapeMobileViewMode = nextMode;
 
+    const backToOverview = document.getElementById('mobile-back-to-overview-btn');
     const showMapButton = document.getElementById('mobile-show-map-btn');
-    const backMapButton = document.getElementById('mobile-back-to-places-btn');
+    const showOverviewButton = document.getElementById('mobile-show-overview-btn');
+    if (backToOverview) {
+        backToOverview.hidden = nextMode !== 'map' || !isMobileMode;
+    }
     if (showMapButton) {
         showMapButton.hidden = nextMode !== 'places' || !isMobileMode;
     }
-    if (backMapButton) {
-        backMapButton.hidden = nextMode !== 'map' || !isMobileMode;
+    if (showOverviewButton) {
+        showOverviewButton.hidden = nextMode !== 'places' || !isMobileMode;
     }
 
     if (nextMode === 'map' && map && typeof map.invalidateSize === 'function') {
@@ -143,54 +123,44 @@ function setMobileWorkspaceMode(mode) {
 
 function bindMobileWorkspaceSwitches() {
     const tabs = document.querySelector('.mobile-workspace-tabs');
-    const mapToggleButtons = document.querySelectorAll('[data-mobile-view="map"], [data-mobile-view="places"]');
-    if ((window.__dateScapeMobileWorkspaceBound) || (tabs == null && mapToggleButtons.length === 0)) return;
+    const toggleButtons = document.querySelectorAll('[data-mobile-view]');
+    if (window.__dateScapeMobileWorkspaceBound) return;
     window.__dateScapeMobileWorkspaceBound = true;
 
     if (tabs) {
         tabs.addEventListener('click', (event) => {
             const button = event.target.closest('.mobile-workspace-tab');
             if (!button) return;
-            const mode = button.dataset.mobileView;
-            setMobileWorkspaceMode(mode);
+            setMobileWorkspaceMode(button.dataset.mobileView);
         });
     }
 
-    mapToggleButtons.forEach((button) => {
+    toggleButtons.forEach((button) => {
         button.addEventListener('click', () => {
-            const mode = button.dataset.mobileView;
-            setMobileWorkspaceMode(mode);
+            setMobileWorkspaceMode(button.dataset.mobileView);
         });
     });
 
     const mediaQuery = window.matchMedia('(max-width: 768px)');
     const applyResponsiveMode = () => {
-        const isMobile = mediaQuery.matches;
         const workspace = document.querySelector('.review-workspace');
         if (!workspace) return;
 
-        if (!isMobile) {
+        if (!mediaQuery.matches) {
             workspace.classList.remove('mobile-mode');
             workspace.removeAttribute('data-mobile-mode');
-            if (tabs) {
-                tabs.hidden = true;
-            }
-
-            const allSections = workspace.querySelectorAll('[data-mobile-section]');
-            allSections.forEach((section) => {
+            workspace.querySelectorAll('[data-mobile-section]').forEach((section) => {
                 section.classList.remove('is-visible');
                 section.removeAttribute('hidden');
                 section.removeAttribute('aria-hidden');
             });
+            if (tabs) tabs.hidden = true;
             return;
         }
 
         workspace.classList.add('mobile-mode');
-        if (tabs) {
-            tabs.hidden = false;
-        }
-        const defaultMode = window.__dateScapeMobileViewMode || 'places';
-        setMobileWorkspaceMode(defaultMode);
+        if (tabs) tabs.hidden = false;
+        setMobileWorkspaceMode(window.__dateScapeMobileViewMode || 'overview');
     };
 
     applyResponsiveMode();
@@ -198,11 +168,16 @@ function bindMobileWorkspaceSwitches() {
 }
 
 window.addEventListener('reviews:stats-updated', (event) => {
-    setupPlaceOverview(currentPlaces, event?.detail || {});
+    currentReviewSnapshot = Object.assign({}, currentReviewSnapshot, event?.detail || {});
+    currentReviewSnapshot.placeStats = Object.assign({}, currentReviewSnapshot.placeStats || {}, event?.detail?.placeStats || {});
+    decoratePlaceCards();
+    setupPlaceOverview(currentPlaces, currentReviewSnapshot);
+    renderTripSummary(currentPlaces, currentReviewSnapshot);
+    renderHighlights(currentPlaces, currentReviewSnapshot.placeStats || {});
+    applyPlaceSorting();
     applyPlaceTypeFilter(currentPlaceTypeFilter);
 });
 
-// Load date record from Supabase
 async function loadDateRecord(slug) {
     const { data: trip, error: tripError } = await supabaseClient
         .from('trips')
@@ -212,26 +187,31 @@ async function loadDateRecord(slug) {
 
     if (tripError) throw tripError;
     currentTrip = trip;
+    currentReviewSnapshot = {
+        reviewCounts: {},
+        reviewedPlaceIds: [],
+        totalReviews: 0,
+        averageRating: null,
+        lastReviewAt: null,
+        placeStats: {}
+    };
 
-    // Update header
     document.getElementById('page-title').textContent = `${trip.emoji || ''} ${trip.title || ''}`.trim();
     document.getElementById('page-subtitle').textContent = trip.subtitle || '';
 
-    const startDate = trip.start_date ? new Date(trip.start_date).toLocaleDateString('ko-KR') : '';
-    const endDate = trip.end_date ? new Date(trip.end_date).toLocaleDateString('ko-KR') : '';
+    const startDate = trip.start_date ? formatDate(trip.start_date) : '';
+    const endDate = trip.end_date ? formatDate(trip.end_date) : '';
     const datesEl = document.getElementById('page-dates');
-    if (datesEl && startDate) {
-        datesEl.textContent = endDate ? `${startDate} ~ ${endDate}` : startDate;
+    if (datesEl) {
+        datesEl.textContent = startDate ? (endDate ? `${startDate} ~ ${endDate}` : startDate) : 'Dates to be decided';
     }
 
-    // Load weather preview for this trip (optional)
     if (typeof loadWeather === 'function') {
         loadWeather(trip).catch((error) => {
             console.error('Weather load error:', error);
         });
     }
 
-    // Load places
     const { data: places, error: placesError } = await supabaseClient
         .from('places')
         .select('*')
@@ -240,24 +220,28 @@ async function loadDateRecord(slug) {
 
     if (placesError) throw placesError;
 
-    currentPlaces = places || [];
-
-    // Initialize map
-    initMap(trip.base_location, currentPlaces);
-
-    // Render places list
+    currentPlaces = Array.isArray(places) ? places : [];
+    initMap(trip.base_location || {}, currentPlaces);
     renderPlaces(currentPlaces);
+
+    if (typeof loadPlaceReviewsForPlaces === 'function' && currentPlaces.length > 0) {
+        await loadPlaceReviewsForPlaces(currentPlaces);
+    } else {
+        setupPlaceOverview(currentPlaces, currentReviewSnapshot);
+        renderTripSummary(currentPlaces, currentReviewSnapshot);
+        renderHighlights(currentPlaces, {});
+    }
 }
 
 function initMap(baseLocation, places) {
-    if (!document.getElementById('map')) return;
+    if (!document.getElementById('map') || !baseLocation?.lat || !baseLocation?.lng) return;
 
     if (map) {
         map.remove();
         map = null;
     }
-    markers = [];
 
+    markers = [];
     map = L.map('map').setView([baseLocation.lat, baseLocation.lng], 14);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -265,9 +249,10 @@ function initMap(baseLocation, places) {
         maxZoom: 19
     }).addTo(map);
 
-    // Base location marker
+    const baseName = escapeHtml(baseLocation.name || 'Base');
+    const baseAddress = escapeHtml(baseLocation.address || '');
     const hotelIcon = L.divIcon({
-        html: `<div style="background:#ff6b9d;color:white;padding:6px 10px;border-radius:15px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.8rem;">${escapeHtml(baseLocation.name)}</div>`,
+        html: `<div style="background:#ff6b9d;color:white;padding:6px 10px;border-radius:15px;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.8rem;">${baseName}</div>`,
         className: 'custom-marker',
         iconSize: [200, 30],
         iconAnchor: [100, 30]
@@ -275,14 +260,12 @@ function initMap(baseLocation, places) {
 
     L.marker([baseLocation.lat, baseLocation.lng], { icon: hotelIcon })
         .addTo(map)
-        .bindPopup(`<b>${escapeHtml(baseLocation.name)}</b><br>${escapeHtml(baseLocation.address || '')}`);
+        .bindPopup(`<b>${baseName}</b><br>${baseAddress}`);
 
-    // Place markers
-    places.forEach(place => {
+    places.forEach((place) => {
         if (!place.lat || !place.lng) return;
 
-        const color = place.type === 'restaurant' ? '#ff6b9d' : '#8b4513';
-
+        const color = (place.type || '').toLowerCase() === 'restaurant' ? '#ff6b9d' : '#8b4513';
         const icon = L.divIcon({
             html: `<div style="background:${color};color:white;padding:5px 8px;border-radius:12px;font-weight:600;box-shadow:0 2px 4px rgba(0,0,0,0.3);white-space:nowrap;font-size:0.75rem;">${escapeHtml(place.name)}</div>`,
             className: 'custom-marker',
@@ -297,15 +280,12 @@ function initMap(baseLocation, places) {
         markers.push(marker);
     });
 
-    // Fit bounds to show all markers
-    if (places.length > 0) {
-        const allPoints = [
-            [baseLocation.lat, baseLocation.lng],
-            ...places.filter(p => p.lat && p.lng).map(p => [p.lat, p.lng])
-        ];
-        if (allPoints.length > 1) {
-            map.fitBounds(allPoints, { padding: [30, 30] });
-        }
+    const allPoints = [
+        [baseLocation.lat, baseLocation.lng],
+        ...places.filter((place) => place.lat && place.lng).map((place) => [place.lat, place.lng])
+    ];
+    if (allPoints.length > 1) {
+        map.fitBounds(allPoints, { padding: [30, 30] });
     }
 }
 
@@ -318,7 +298,9 @@ function renderPlaces(places) {
 
     if (currentPlaces.length === 0) {
         container.innerHTML = '<div class="places-empty">No places recorded yet. Add the first one!</div>';
-        setupPlaceOverview(currentPlaces);
+        setupPlaceOverview(currentPlaces, currentReviewSnapshot);
+        renderTripSummary(currentPlaces, currentReviewSnapshot);
+        renderHighlights(currentPlaces, {});
         return;
     }
 
@@ -326,42 +308,122 @@ function renderPlaces(places) {
         container.appendChild(createPlaceCard(place));
     });
 
-    setupPlaceOverview(currentPlaces);
+    decoratePlaceCards();
+    setupPlaceOverview(currentPlaces, currentReviewSnapshot);
+    renderTripSummary(currentPlaces, currentReviewSnapshot);
+    renderHighlights(currentPlaces, currentReviewSnapshot.placeStats || {});
+    applyPlaceSorting();
     applyPlaceTypeFilter(currentPlaceTypeFilter);
-
-    if (typeof loadPlaceReviewsForPlaces === 'function') {
-        loadPlaceReviewsForPlaces(currentPlaces).catch(() => {});
-    }
 }
 
 function createPlaceCard(place) {
-    const card = document.createElement('div');
+    const card = document.createElement('article');
     card.className = 'place-card';
     card.dataset.placeType = (place.type || 'other').toLowerCase();
     card.dataset.placeId = String(place.id);
+    card.dataset.originalIndex = String(currentPlaces.findIndex((item) => String(item.id) === String(place.id)));
+    card.dataset.hasReviews = 'false';
+    card.dataset.latestReviewAt = '';
+    card.dataset.averageRating = '';
 
     const safeName = escapeHtml(place.name);
     const safeCategory = escapeHtml(place.category);
     const safeArea = escapeHtml(place.area);
     const safeDescription = escapeHtml(place.description);
     const safeLink = sanitizeExternalUrl(place.link);
+    const typeLabel = escapeHtml((place.type || 'Place').replace(/^\w/, (char) => char.toUpperCase()));
 
     card.innerHTML = `
+        <div class="place-memory-preview" id="place-preview-${place.id}" hidden></div>
         <div class="place-card-header">
-            <h3 class="place-name">${safeName}</h3>
-            ${safeCategory ? `<span class="place-category">${safeCategory}</span>` : ''}
+            <div class="place-card-title-group">
+                <h3 class="place-name">${safeName}</h3>
+                <div class="place-chip-row">
+                    ${safeCategory ? `<span class="place-category">${safeCategory}</span>` : ''}
+                    <span class="place-type-chip">${typeLabel}</span>
+                    <span class="place-status-badge place-status-badge--pending" id="place-status-${place.id}">No reviews yet</span>
+                </div>
+            </div>
         </div>
         ${safeArea ? `<div class="place-area">${safeArea}</div>` : ''}
         ${safeDescription ? `<div class="place-description">${safeDescription}</div>` : ''}
-        ${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="place-map-link">View on Map</a>` : ''}
+        <div class="place-review-summary" id="place-review-summary-${place.id}">Waiting for the first memory from this stop.</div>
+        <div class="place-card-actions">
+            ${safeLink ? `<a href="${safeLink}" target="_blank" rel="noopener noreferrer" class="place-map-link">Open map link</a>` : ''}
+        </div>
         <div class="reviews-container" id="reviews-${place.id}">
             <div class="reviews-loading">Loading reviews...</div>
         </div>
     `;
 
-    // Reviews are loaded in batch in renderPlaces() for performance.
-
     return card;
+}
+
+function decoratePlaceCards() {
+    currentPlaces.forEach((place) => {
+        const placeId = String(place.id);
+        const card = document.querySelector(`.place-card[data-place-id="${placeId}"]`);
+        if (!card) return;
+
+        const stats = currentReviewSnapshot.placeStats?.[placeId] || {};
+        const statusEl = document.getElementById(`place-status-${placeId}`);
+        const summaryEl = document.getElementById(`place-review-summary-${placeId}`);
+        const previewEl = document.getElementById(`place-preview-${placeId}`);
+        const reviewCount = Number(stats.reviewCount) || 0;
+        const averageRating = Number.isFinite(Number(stats.averageRating)) && Number(stats.averageRating) > 0
+            ? Number(stats.averageRating)
+            : null;
+        const latestReviewLabel = stats.latestReviewAt ? formatDate(stats.latestReviewAt) : '';
+        const photoCount = Number(stats.photoCount) || 0;
+        const hasTextReview = Boolean(stats.hasTextReview);
+
+        card.dataset.hasReviews = reviewCount > 0 ? 'true' : 'false';
+        card.dataset.latestReviewAt = stats.latestReviewAt || '';
+        card.dataset.averageRating = averageRating != null ? String(averageRating) : '';
+        card.dataset.reviewCount = String(reviewCount);
+
+        if (statusEl) {
+            let statusText = 'No reviews yet';
+            let statusClass = 'place-status-badge place-status-badge--pending';
+            if (reviewCount > 0 && !hasTextReview) {
+                statusText = 'Rating only';
+                statusClass = 'place-status-badge place-status-badge--rating';
+            } else if (reviewCount > 0) {
+                statusText = 'Review complete';
+                statusClass = 'place-status-badge place-status-badge--complete';
+            }
+            statusEl.className = statusClass;
+            statusEl.textContent = statusText;
+        }
+
+        if (summaryEl) {
+            if (reviewCount === 0) {
+                summaryEl.textContent = 'Waiting for the first memory from this stop.';
+            } else {
+                const parts = [`${reviewCount} review${reviewCount > 1 ? 's' : ''}`];
+                if (averageRating != null) parts.push(`avg ${averageRating.toFixed(1)}/5`);
+                if (latestReviewLabel) parts.push(`latest ${latestReviewLabel}`);
+                if (photoCount > 0) parts.push(`${photoCount} photo${photoCount > 1 ? 's' : ''}`);
+                summaryEl.textContent = parts.join(' · ');
+            }
+        }
+
+        if (previewEl) {
+            if (stats.previewPhotoUrl) {
+                previewEl.hidden = false;
+                previewEl.innerHTML = `
+                    <img src="${escapeHtml(stats.previewPhotoUrl)}" alt="${escapeHtml(place.name)} memory preview" loading="lazy">
+                    <div class="place-memory-preview-copy">
+                        <span class="place-memory-preview-label">Photo memory</span>
+                        <strong>${photoCount} photo${photoCount > 1 ? 's' : ''} captured here</strong>
+                    </div>
+                `;
+            } else {
+                previewEl.hidden = true;
+                previewEl.innerHTML = '';
+            }
+        }
+    });
 }
 
 function setupPlaceOverview(places = [], stats = {}) {
@@ -375,13 +437,13 @@ function setupPlaceOverview(places = [], stats = {}) {
     const latestReviewEl = document.getElementById('overview-latest-review');
     const avgReviewsPerPlaceEl = document.getElementById('overview-avg-reviews-per-place');
     const placeList = Array.isArray(places) ? places : [];
-    const reviewCounts = Object.assign({}, window.__placeReviewCounts || {}, stats.reviewCounts || {});
+    const reviewCounts = Object.assign({}, stats.reviewCounts || {});
     const reviewedPlaceIds = new Set(stats.reviewedPlaceIds || []);
     const totalReviews = Number.isFinite(stats.totalReviews)
         ? stats.totalReviews
         : Object.values(reviewCounts).reduce((acc, count) => acc + (Number(count) || 0), 0);
     const parsedAverageRating = Number.parseFloat(stats.averageRating);
-    const avgRating = Number.isFinite(parsedAverageRating)
+    const avgRating = Number.isFinite(parsedAverageRating) && parsedAverageRating > 0
         ? parsedAverageRating
         : null;
     const latestReviewDate = stats.lastReviewAt ? new Date(stats.lastReviewAt) : null;
@@ -399,8 +461,8 @@ function setupPlaceOverview(places = [], stats = {}) {
         ? (totalReviews / placeList.length).toFixed(1)
         : '0.0';
 
-    const restaurants = placeList.filter(place => (place.type || '').toLowerCase() === 'restaurant').length;
-    const cafes = placeList.filter(place => (place.type || '').toLowerCase() === 'cafe').length;
+    const restaurants = placeList.filter((place) => (place.type || '').toLowerCase() === 'restaurant').length;
+    const cafes = placeList.filter((place) => (place.type || '').toLowerCase() === 'cafe').length;
 
     if (totalEl) totalEl.textContent = String(placeList.length);
     if (totalReviewsEl) totalReviewsEl.textContent = String(totalReviews);
@@ -417,6 +479,137 @@ function setupPlaceOverview(places = [], stats = {}) {
     if (avgReviewsPerPlaceEl) avgReviewsPerPlaceEl.textContent = avgReviewsPerPlace;
 }
 
+function renderTripSummary(places = [], stats = {}) {
+    const totalPlaces = places.length;
+    const reviewedPlaces = Array.isArray(stats.reviewedPlaceIds) ? stats.reviewedPlaceIds.length : 0;
+    const completion = totalPlaces > 0 ? Math.round((reviewedPlaces / totalPlaces) * 100) : 0;
+    const avgRating = Number.isFinite(Number(stats.averageRating)) && Number(stats.averageRating) > 0
+        ? Number(stats.averageRating).toFixed(1)
+        : '-';
+    const latestReview = stats.lastReviewAt ? formatDate(stats.lastReviewAt) : '-';
+
+    const titleEl = document.getElementById('trip-summary-title');
+    const textEl = document.getElementById('trip-summary-text');
+    const completionEl = document.getElementById('summary-completion-rate');
+    const totalPlacesEl = document.getElementById('summary-total-places');
+    const avgRatingEl = document.getElementById('summary-average-rating');
+    const latestReviewEl = document.getElementById('summary-latest-review');
+
+    const restaurants = places.filter((place) => (place.type || '').toLowerCase() === 'restaurant').length;
+    const cafes = places.filter((place) => (place.type || '').toLowerCase() === 'cafe').length;
+    const mood = buildTripMoodSummary({
+        totalPlaces,
+        reviewedPlaces,
+        avgRating: avgRating === '-' ? null : Number(avgRating),
+        restaurants,
+        cafes
+    });
+
+    if (titleEl) {
+        titleEl.textContent = totalPlaces > 0
+            ? `${reviewedPlaces}/${totalPlaces} places have a memory attached`
+            : 'Start recording the places from this trip';
+    }
+    if (textEl) textEl.textContent = mood;
+    if (completionEl) completionEl.textContent = `${completion}%`;
+    if (totalPlacesEl) totalPlacesEl.textContent = String(totalPlaces);
+    if (avgRatingEl) avgRatingEl.textContent = avgRating;
+    if (latestReviewEl) latestReviewEl.textContent = latestReview || '-';
+}
+
+function buildTripMoodSummary(summary) {
+    if (summary.totalPlaces === 0) {
+        return 'No places have been saved yet, so this trip is still waiting for its first shared memory.';
+    }
+
+    const dominantType = summary.restaurants > summary.cafes
+        ? 'food-forward'
+        : (summary.cafes > summary.restaurants ? 'cafe-heavy' : 'balanced');
+    const tone = summary.avgRating != null
+        ? (summary.avgRating >= 4.5 ? 'a standout trip' : (summary.avgRating >= 4 ? 'a strong trip' : 'a mixed but memorable trip'))
+        : 'a trip still waiting on reflections';
+    const coverage = summary.reviewedPlaces === 0
+        ? 'None of the stops have been reviewed yet.'
+        : (summary.reviewedPlaces === summary.totalPlaces
+            ? 'Every stop already has a review.'
+            : `${summary.totalPlaces - summary.reviewedPlaces} stop${summary.totalPlaces - summary.reviewedPlaces > 1 ? 's are' : ' is'} still waiting for a review.`);
+
+    const styleLine = dominantType === 'food-forward'
+        ? 'The route leans more toward meals than coffee breaks.'
+        : (dominantType === 'cafe-heavy'
+            ? 'This one feels like a slow cafe-and-conversation day.'
+            : 'The mix of cafes and restaurants feels evenly paced.');
+
+    return `${styleLine} So far it reads as ${tone}. ${coverage}`;
+}
+
+function renderHighlights(places = [], placeStats = {}) {
+    const container = document.getElementById('memory-highlights-grid');
+    if (!container) return;
+
+    const byId = Object.fromEntries(places.map((place) => [String(place.id), place]));
+    const candidates = [];
+
+    const highestRated = Object.entries(placeStats)
+        .filter(([, stats]) => Number(stats.averageRating) > 0)
+        .sort((a, b) => Number(b[1].averageRating) - Number(a[1].averageRating))[0];
+    if (highestRated) {
+        candidates.push({ type: 'Top rated', placeId: highestRated[0], stats: highestRated[1] });
+    }
+
+    const mostPhotos = Object.entries(placeStats)
+        .filter(([, stats]) => Number(stats.photoCount) > 0)
+        .sort((a, b) => Number(b[1].photoCount) - Number(a[1].photoCount))[0];
+    if (mostPhotos) {
+        candidates.push({ type: 'Photo memory', placeId: mostPhotos[0], stats: mostPhotos[1] });
+    }
+
+    const latestReview = Object.entries(placeStats)
+        .filter(([, stats]) => Boolean(stats.latestReviewAt))
+        .sort((a, b) => new Date(b[1].latestReviewAt) - new Date(a[1].latestReviewAt))[0];
+    if (latestReview) {
+        candidates.push({ type: 'Latest reflection', placeId: latestReview[0], stats: latestReview[1] });
+    }
+
+    const uniqueHighlights = [];
+    const seen = new Set();
+    candidates.forEach((candidate) => {
+        if (!seen.has(candidate.placeId)) {
+            seen.add(candidate.placeId);
+            uniqueHighlights.push(candidate);
+        }
+    });
+
+    if (uniqueHighlights.length === 0) {
+        container.innerHTML = '<div class="memory-highlight-empty">Highlights will appear once reviews and photos are added.</div>';
+        return;
+    }
+
+    container.innerHTML = uniqueHighlights.map((item) => {
+        const place = byId[item.placeId];
+        if (!place) return '';
+        const safeTitle = escapeHtml(place.name || 'Place');
+        const safeCategory = escapeHtml(place.category || place.type || 'Place');
+        const stats = item.stats || {};
+        const meta = [];
+        if (Number(stats.averageRating) > 0) meta.push(`${Number(stats.averageRating).toFixed(1)}/5`);
+        if (Number(stats.photoCount) > 0) meta.push(`${Number(stats.photoCount)} photo${Number(stats.photoCount) > 1 ? 's' : ''}`);
+        if (stats.latestReviewAt) meta.push(formatDate(stats.latestReviewAt));
+
+        return `
+            <article class="memory-highlight-card">
+                ${stats.previewPhotoUrl ? `<img class="memory-highlight-image" src="${escapeHtml(stats.previewPhotoUrl)}" alt="${safeTitle}" loading="lazy">` : ''}
+                <div class="memory-highlight-copy">
+                    <span class="memory-highlight-type">${escapeHtml(item.type)}</span>
+                    <h3>${safeTitle}</h3>
+                    <p>${safeCategory}</p>
+                    <div class="memory-highlight-meta">${meta.join(' · ') || 'Waiting for more details'}</div>
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
 function bindOverviewFilterActions() {
     const containers = document.querySelectorAll('.overview-filter-actions, .mobile-place-filters');
     if (containers.length === 0 || window.__overviewFilterActionsBound) return;
@@ -426,30 +619,84 @@ function bindOverviewFilterActions() {
         container.addEventListener('click', (event) => {
             const button = event.target.closest('.overview-filter-btn');
             if (!button) return;
-            const filter = button.dataset.filter || 'all';
-            applyPlaceTypeFilter(filter);
+            applyPlaceTypeFilter(button.dataset.filter || 'all');
         });
+    });
+}
+
+function bindPlaceSortControl() {
+    const select = document.getElementById('place-sort-select');
+    if (!select || window.__placeSortBound) return;
+    window.__placeSortBound = true;
+    select.addEventListener('change', (event) => {
+        currentPlaceSort = event.target.value || 'review-status';
+        applyPlaceSorting();
     });
 }
 
 function applyPlaceTypeFilter(filter = 'all') {
     currentPlaceTypeFilter = filter;
 
-    const buttons = document.querySelectorAll('.overview-filter-btn');
-    buttons.forEach((button) => {
+    document.querySelectorAll('.overview-filter-btn').forEach((button) => {
         const isActive = (button.dataset.filter || 'all') === filter;
         button.classList.toggle('is-active', isActive);
     });
 
     const cards = document.querySelectorAll('.places-list .place-card');
+    let visibleCount = 0;
     cards.forEach((card) => {
         const cardType = (card.dataset.placeType || 'other').toLowerCase();
-        const visible = filter === 'all' || cardType === filter;
+        const hasReviews = card.dataset.hasReviews === 'true';
+        const visible = filter === 'all'
+            || cardType === filter
+            || (filter === 'reviewed' && hasReviews)
+            || (filter === 'unreviewed' && !hasReviews);
         card.style.display = visible ? '' : 'none';
+        if (visible) visibleCount += 1;
     });
+
+    const empty = document.getElementById('places-filter-empty');
+    if (empty) {
+        empty.hidden = visibleCount > 0;
+    }
 }
 
-// Add Place Modal
+function applyPlaceSorting() {
+    const container = document.getElementById('places-list');
+    if (!container) return;
+
+    const cards = Array.from(container.querySelectorAll('.place-card'));
+    cards.sort((a, b) => comparePlaceCards(a, b, currentPlaceSort));
+    cards.forEach((card) => container.appendChild(card));
+}
+
+function comparePlaceCards(cardA, cardB, sortKey) {
+    const placeA = currentPlaces.find((place) => String(place.id) === cardA.dataset.placeId) || {};
+    const placeB = currentPlaces.find((place) => String(place.id) === cardB.dataset.placeId) || {};
+    const originalDiff = Number(cardA.dataset.originalIndex || 0) - Number(cardB.dataset.originalIndex || 0);
+    const averageA = Number(cardA.dataset.averageRating || 0);
+    const averageB = Number(cardB.dataset.averageRating || 0);
+    const latestA = cardA.dataset.latestReviewAt ? new Date(cardA.dataset.latestReviewAt).getTime() : 0;
+    const latestB = cardB.dataset.latestReviewAt ? new Date(cardB.dataset.latestReviewAt).getTime() : 0;
+    const nameDiff = String(placeA.name || '').localeCompare(String(placeB.name || ''), 'en');
+
+    if (sortKey === 'name') {
+        return nameDiff || originalDiff;
+    }
+
+    if (sortKey === 'rating') {
+        return (averageB - averageA) || nameDiff || originalDiff;
+    }
+
+    if (sortKey === 'recent') {
+        return (latestB - latestA) || nameDiff || originalDiff;
+    }
+
+    const reviewedA = cardA.dataset.hasReviews === 'true' ? 1 : 0;
+    const reviewedB = cardB.dataset.hasReviews === 'true' ? 1 : 0;
+    return (reviewedA - reviewedB) || originalDiff;
+}
+
 function showAddPlaceModal() {
     const modal = document.createElement('div');
     modal.id = 'add-place-modal';
@@ -549,11 +796,9 @@ async function submitNewPlace(event) {
         if (error) throw error;
 
         closeAddPlaceModal();
-
-        // Reload the page to show the new place
         const slug = new URLSearchParams(window.location.search).get('plan') || 'daejeon_feb_2026';
         await loadDateRecord(slug);
-        showAddPlaceButton();
+        await showAddPlaceButton();
     } catch (error) {
         console.error('Error adding place:', error);
         alert('Failed to add place: ' + error.message);

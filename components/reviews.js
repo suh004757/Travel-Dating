@@ -1,8 +1,13 @@
-﻿// Reviews Component
+// Reviews Component
 // Handles review CRUD + photo upload for places
 // Public read, authenticated write
 
+const reviewUtils = window.DateScapeUtils || {};
+
 function escapeHtmlReview(text) {
+    if (typeof reviewUtils.escapeHtml === 'function') {
+        return reviewUtils.escapeHtml(text);
+    }
     return String(text ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -24,7 +29,6 @@ function getUserNickname(user) {
     );
 }
 
-// Render star rating (display only)
 function renderStars(rating) {
     let html = '<span class="star-rating">';
     for (let i = 1; i <= 5; i++) {
@@ -34,10 +38,9 @@ function renderStars(rating) {
     return html;
 }
 
-// Render interactive star picker
 function renderStarPicker(containerId, initialRating) {
     const rating = initialRating || 0;
-    let html = '<div class="star-picker" data-container="' + containerId + '">';
+    let html = `<div class="star-picker" data-container="${containerId}">`;
     for (let i = 1; i <= 5; i++) {
         html += `<span class="star-pick ${i <= rating ? 'active' : ''}" data-value="${i}" onclick="pickStar('${containerId}', ${i})">${i <= rating ? '\u2605' : '\u2606'}</span>`;
     }
@@ -50,141 +53,49 @@ function pickStar(containerId, value) {
     const picker = document.querySelector(`.star-picker[data-container="${containerId}"]`);
     if (!picker) return;
 
-    const stars = picker.querySelectorAll('.star-pick');
-    stars.forEach((star, index) => {
-        if (index < value) {
-            star.classList.add('active');
-            star.textContent = '\u2605';
-        } else {
-            star.classList.remove('active');
-            star.textContent = '\u2606';
-        }
+    picker.querySelectorAll('.star-pick').forEach((star, index) => {
+        const active = index < value;
+        star.classList.toggle('active', active);
+        star.textContent = active ? '\u2605' : '\u2606';
     });
 
     const input = document.getElementById(`rating-${containerId}`);
     if (input) input.value = value;
 }
 
-// Load all reviews for a place
 async function loadPlaceReviews(placeId) {
-    const container = document.getElementById(`reviews-${placeId}`);
-    if (!container) return;
-
-    try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-
-        // Load all reviews for this place
-        const { data: reviews, error } = await supabaseClient
-            .from('reviews')
-            .select('*')
-            .eq('place_id', placeId)
-            .order('created_at', { ascending: true });
-
-        if (error) throw error;
-
-        // Load photos for all reviews
-        const reviewIds = (reviews || []).map(r => r.id);
-        let photos = [];
-        if (reviewIds.length > 0) {
-            const { data: photoData } = await supabaseClient
-                .from('review_photos')
-                .select('*')
-                .in('review_id', reviewIds)
-                .order('created_at', { ascending: true });
-            photos = photoData || [];
-        }
-
-        // Group photos by review_id
-        const photosByReview = {};
-        photos.forEach(p => {
-            if (!photosByReview[p.review_id]) photosByReview[p.review_id] = [];
-            photosByReview[p.review_id].push(p);
-        });
-
-        let html = '<div class="reviews-section">';
-        html += '<div class="reviews-header">Reviews</div>';
-
-        if (reviews && reviews.length > 0) {
-            html += '<div class="reviews-list">';
-            const currentUserNickname = getUserNickname(user);
-            reviews.forEach(review => {
-                const isOwn = user && review.user_id === user.id;
-                const reviewPhotos = photosByReview[review.id] || [];
-                html += renderReviewCard(review, reviewPhotos, isOwn, placeId, currentUserNickname);
-            });
-            html += '</div>';
-        } else {
-            html += '<div class="reviews-empty">No reviews yet. Be the first to leave one!</div>';
-        }
-
-        if (user) {
-            const existingReview = (reviews || []).find(r => r.user_id === user.id);
-            if (existingReview) {
-                html += `<button class="review-edit-btn" onclick="showReviewModal('${placeId}', true)">Edit my review</button>`;
-            } else {
-                html += `<button class="review-write-btn" onclick="showReviewModal('${placeId}', false)">Write a review</button>`;
-            }
-        } else {
-            html += `<div class="review-login-prompt">
-                <a href="#" onclick="showLoginModal(); return false;">Log in</a> to write a review
-            </div>`;
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
-    } catch (error) {
-        console.error('Error loading reviews:', error);
-        container.innerHTML = '<div class="reviews-error">Failed to load reviews.</div>';
-    }
+    await loadPlaceReviewsForPlaces([{ id: placeId }]);
 }
 
 async function loadPlaceReviewsForPlaces(places) {
-    const placeList = Array.isArray(places)
-        ? places.map(place => String(place.id)).filter(Boolean)
+    const placeIds = Array.isArray(places)
+        ? places.map((place) => String(place.id)).filter(Boolean)
         : [];
 
-    if (placeList.length === 0) return;
-
-    const placeReviews = Object.fromEntries(placeList.map((placeId) => [placeId, []]));
-    const photoMap = Object.create(null);
-    const reviewStats = {
-        totalReviews: 0,
-        totalRating: 0,
-        ratedReviewCount: 0,
-        lastReviewAt: null
-    };
+    if (placeIds.length === 0) return;
 
     try {
         const { data: { user } } = await supabaseClient.auth.getUser();
         const { data: reviews, error } = await supabaseClient
             .from('reviews')
             .select('*')
-            .in('place_id', placeList)
+            .in('place_id', placeIds)
             .order('created_at', { ascending: true });
 
         if (error) throw error;
 
         const safeReviews = reviews || [];
+        const placeReviews = Object.fromEntries(placeIds.map((placeId) => [placeId, []]));
+        const reviewIds = safeReviews.map((review) => review.id);
+
         safeReviews.forEach((review) => {
             if (!placeReviews[review.place_id]) {
                 placeReviews[review.place_id] = [];
             }
             placeReviews[review.place_id].push(review);
-
-            reviewStats.totalReviews += 1;
-            if (Number(review.rating)) {
-                reviewStats.totalRating += Number(review.rating);
-                reviewStats.ratedReviewCount += 1;
-            }
-            if (review.created_at) {
-                const created = new Date(review.created_at);
-                if (!reviewStats.lastReviewAt || created > reviewStats.lastReviewAt) {
-                    reviewStats.lastReviewAt = created;
-                }
-            }
         });
 
-        const reviewIds = safeReviews.map(review => review.id);
+        let photos = [];
         if (reviewIds.length > 0) {
             const { data: photoData, error: photoError } = await supabaseClient
                 .from('review_photos')
@@ -192,60 +103,115 @@ async function loadPlaceReviewsForPlaces(places) {
                 .in('review_id', reviewIds)
                 .order('created_at', { ascending: true });
 
-            if (photoError) {
-                throw photoError;
-            }
-
-            (photoData || []).forEach((photo) => {
-                if (!photoMap[photo.review_id]) photoMap[photo.review_id] = [];
-                photoMap[photo.review_id].push(photo);
-            });
+            if (photoError) throw photoError;
+            photos = photoData || [];
         }
 
-        const reviewCounts = Object.fromEntries(placeList.map((placeId) => [placeId, (placeReviews[placeId] || []).length]));
-        window.__placeReviewCounts = Object.assign({}, reviewCounts, window.__placeReviewCounts || {});
-        const averageRating = reviewStats.ratedReviewCount > 0
-            ? reviewStats.totalRating / reviewStats.ratedReviewCount
-            : 0;
-
-        const reviewedPlaceIds = Object.entries(placeReviews)
-            .filter(([, list]) => (list || []).length > 0)
-            .map(([placeId]) => placeId);
-
-        placeList.forEach((placeId) => {
-            const container = document.getElementById(`reviews-${placeId}`);
-            if (!container) return;
-
-            const placeReviewList = placeReviews[placeId] || [];
-            const html = buildReviewSection(placeReviewList, photoMap, user, placeId);
-            container.innerHTML = html;
+        const photoMap = Object.create(null);
+        photos.forEach((photo) => {
+            if (!photoMap[photo.review_id]) photoMap[photo.review_id] = [];
+            photoMap[photo.review_id].push(photo);
         });
 
-        window.dispatchEvent(new CustomEvent('reviews:stats-updated', {
-            detail: {
-                reviewCounts,
-                totalReviews: reviewStats.totalReviews,
-                averageRating,
-                reviewedPlaceIds,
-                lastReviewAt: reviewStats.lastReviewAt ? reviewStats.lastReviewAt.toISOString() : null
-            }
-        }));
+        const detail = buildReviewStats(placeIds, placeReviews, photoMap);
+        detail.currentUserId = user?.id || null;
+        window.__placeReviewCounts = Object.assign({}, detail.reviewCounts);
+        window.__placeReviewStats = Object.assign({}, detail.placeStats);
+
+        placeIds.forEach((placeId) => {
+            const container = document.getElementById(`reviews-${placeId}`);
+            if (!container) return;
+            container.innerHTML = buildReviewSection(placeReviews[placeId] || [], photoMap, user, placeId);
+        });
+
+        window.dispatchEvent(new CustomEvent('reviews:stats-updated', { detail }));
     } catch (error) {
         console.error('Error loading reviews in bulk:', error);
-
-        placeList.forEach((placeId) => {
+        placeIds.forEach((placeId) => {
             const container = document.getElementById(`reviews-${placeId}`);
             if (container) {
                 container.innerHTML = '<div class="reviews-error">Failed to load reviews.</div>';
             }
         });
-
-        const reviewCounts = Object.fromEntries(placeList.map((placeId) => [placeId, 0]));
-        window.__placeReviewCounts = reviewCounts;
         window.dispatchEvent(new CustomEvent('reviews:stats-updated', {
-            detail: { reviewCounts }
+            detail: {
+                reviewCounts: Object.fromEntries(placeIds.map((placeId) => [placeId, 0])),
+                reviewedPlaceIds: [],
+                totalReviews: 0,
+                averageRating: null,
+                lastReviewAt: null,
+                placeStats: {}
+            }
         }));
     }
+}
+
+function buildReviewStats(placeIds, placeReviews, photoMap) {
+    const detail = {
+        reviewCounts: Object.fromEntries(placeIds.map((placeId) => [placeId, 0])),
+        reviewedPlaceIds: [],
+        totalReviews: 0,
+        averageRating: null,
+        lastReviewAt: null,
+        placeStats: {}
+    };
+
+    let totalRating = 0;
+    let ratedReviewCount = 0;
+    let latestReviewDate = null;
+
+    placeIds.forEach((placeId) => {
+        const reviews = placeReviews[placeId] || [];
+        const stat = {
+            reviewCount: reviews.length,
+            ratedReviewCount: 0,
+            averageRating: null,
+            latestReviewAt: null,
+            hasTextReview: false,
+            photoCount: 0,
+            previewPhotoUrl: '',
+            reviewedByCurrentUser: false
+        };
+
+        detail.reviewCounts[placeId] = reviews.length;
+        if (reviews.length > 0) {
+            detail.reviewedPlaceIds.push(placeId);
+        }
+
+        reviews.forEach((review) => {
+            detail.totalReviews += 1;
+            if (Number(review.rating) > 0) {
+                totalRating += Number(review.rating);
+                ratedReviewCount += 1;
+                stat.ratedReviewCount += 1;
+            }
+            if (review.text) stat.hasTextReview = true;
+            if (review.created_at) {
+                const created = new Date(review.created_at);
+                if (!latestReviewDate || created > latestReviewDate) latestReviewDate = created;
+                if (!stat.latestReviewAt || created > new Date(stat.latestReviewAt)) {
+                    stat.latestReviewAt = created.toISOString();
+                }
+            }
+
+            const reviewPhotos = photoMap[review.id] || [];
+            stat.photoCount += reviewPhotos.length;
+            if (!stat.previewPhotoUrl && reviewPhotos[0]?.photo_url) {
+                stat.previewPhotoUrl = reviewPhotos[0].photo_url;
+            }
+        });
+
+        if (stat.ratedReviewCount > 0) {
+            const placeRatingTotal = reviews.reduce((sum, review) => sum + (Number(review.rating) || 0), 0);
+            stat.averageRating = placeRatingTotal / stat.ratedReviewCount;
+        }
+
+        detail.placeStats[placeId] = stat;
+    });
+
+    detail.averageRating = ratedReviewCount > 0 ? totalRating / ratedReviewCount : null;
+    detail.lastReviewAt = latestReviewDate ? latestReviewDate.toISOString() : null;
+    return detail;
 }
 
 function buildReviewSection(reviews, photoMap, user, placeId) {
@@ -255,10 +221,9 @@ function buildReviewSection(reviews, photoMap, user, placeId) {
     if (reviews.length > 0) {
         html += '<div class="reviews-list">';
         const currentUserNickname = getUserNickname(user);
-        reviews.forEach(review => {
-            const isOwn = user && review.user_id === user.id;
-            const reviewPhotos = photoMap[review.id] || [];
-            html += renderReviewCard(review, reviewPhotos, isOwn, placeId, currentUserNickname);
+        reviews.forEach((review) => {
+            const isOwn = Boolean(user && review.user_id === user.id);
+            html += renderReviewCard(review, photoMap[review.id] || [], isOwn, placeId, currentUserNickname);
         });
         html += '</div>';
     } else {
@@ -266,20 +231,15 @@ function buildReviewSection(reviews, photoMap, user, placeId) {
     }
 
     if (user) {
-        const existingReview = reviews.find(r => r.user_id === user.id);
-        if (existingReview) {
-            html += `<button class="review-edit-btn" onclick="showReviewModal('${placeId}', true)">Edit my review</button>`;
-        } else {
-            html += `<button class="review-write-btn" onclick="showReviewModal('${placeId}', false)">Write a review</button>`;
-        }
+        const existingReview = reviews.find((review) => review.user_id === user.id);
+        html += existingReview
+            ? `<button class="review-edit-btn" onclick="showReviewModal('${placeId}', true)">Edit my review</button>`
+            : `<button class="review-write-btn" onclick="showReviewModal('${placeId}', false)">Write a review</button>`;
     } else {
-        html += `<div class="review-login-prompt">
-            <a href="#" onclick="showLoginModal(); return false;">Log in</a> to write a review
-        </div>`;
+        html += `<div class="review-login-prompt"><a href="#" onclick="showLoginModal(); return false;">Log in</a> to write a review</div>`;
     }
 
     html += '</div>';
-
     return html;
 }
 
@@ -290,31 +250,30 @@ function renderReviewCard(review, photos, isOwn, placeId, currentUserNickname) {
             ? (currentUserNickname || review.author_name || 'Me')
             : (review.author_name || 'Member')
     );
-    const date = new Date(review.created_at).toLocaleDateString('ko-KR');
+    const date = review.created_at ? new Date(review.created_at).toLocaleDateString('ko-KR') : '';
 
     let html = `<div class="review-card ${isOwn ? 'review-own' : 'review-partner'}">`;
-    html += `<div class="review-card-header">`;
+    html += '<div class="review-card-header">';
     html += `<span class="review-author">${safeAuthorLabel}</span>`;
     html += renderStars(review.rating || 0);
-    html += `<span class="review-date">${date}</span>`;
-    html += `</div>`;
+    html += `<span class="review-date">${date || '-'}</span>`;
+    html += '</div>';
 
     if (safeText) {
         html += `<div class="review-text">${safeText}</div>`;
     }
 
-    // Photos
     if (photos.length > 0) {
         html += '<div class="review-photos">';
-        photos.forEach(photo => {
+        photos.forEach((photo) => {
             const safeUrl = escapeHtmlReview(photo.photo_url);
             const safeCaption = escapeHtmlReview(photo.caption);
-            html += `<div class="review-photo-item">`;
+            html += '<div class="review-photo-item">';
             html += `<img src="${safeUrl}" alt="${safeCaption}" loading="lazy" onclick="openPhotoViewer('${safeUrl}')">`;
             if (isOwn) {
                 html += `<button class="photo-delete-btn" onclick="deleteReviewPhoto('${photo.id}', '${placeId}')" title="Delete photo">x</button>`;
             }
-            html += `</div>`;
+            html += '</div>';
         });
         html += '</div>';
     }
@@ -323,7 +282,6 @@ function renderReviewCard(review, photos, isOwn, placeId, currentUserNickname) {
     return html;
 }
 
-// Show review write/edit modal
 async function showReviewModal(placeId, isEdit) {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
@@ -363,7 +321,6 @@ async function showReviewModal(placeId, isEdit) {
         <div class="modal-content review-modal-content">
             <span class="close" onclick="closeReviewModal()">&times;</span>
             <h2>${isEdit ? 'Edit Review' : 'Write a Review'}</h2>
-
             <form id="reviewForm" onsubmit="submitReview(event, '${placeId}')">
                 <label>Rating</label>
                 ${renderStarPicker(placeId, existingRating)}
@@ -373,10 +330,10 @@ async function showReviewModal(placeId, isEdit) {
 
                 <label>Photos</label>
                 <div class="photo-upload-area">
-                    ${existingPhotos.map(p => `
+                    ${existingPhotos.map((photo) => `
                         <div class="existing-photo">
-                            <img src="${escapeHtmlReview(p.photo_url)}" alt="photo">
-                            <button type="button" class="photo-remove-btn" onclick="deleteReviewPhoto('${p.id}', '${placeId}')">x</button>
+                            <img src="${escapeHtmlReview(photo.photo_url)}" alt="photo">
+                            <button type="button" class="photo-remove-btn" onclick="deleteReviewPhoto('${photo.id}', '${placeId}')">x</button>
                         </div>
                     `).join('')}
                     <label class="photo-upload-btn">
@@ -411,19 +368,21 @@ async function previewPhotos(placeId, input) {
     const previews = [];
     for (const file of input.files) {
         const resized = await resizeImage(file);
-        const sizeKB = Math.round(resized.size / 1024);
-        const url = URL.createObjectURL(resized);
-        previews.push({ url, name: file.name, sizeKB });
+        previews.push({
+            url: URL.createObjectURL(resized),
+            name: file.name,
+            sizeKB: Math.round(resized.size / 1024)
+        });
     }
 
     previewContainer.innerHTML = '';
-    previews.forEach(p => {
+    previews.forEach((preview) => {
         const div = document.createElement('div');
         div.className = 'photo-preview-item';
         div.innerHTML = `
-            <img src="${p.url}" alt="preview">
-            <span class="photo-name">${escapeHtmlReview(p.name)}</span>
-            <span class="photo-size">${p.sizeKB}KB</span>
+            <img src="${preview.url}" alt="preview">
+            <span class="photo-name">${escapeHtmlReview(preview.name)}</span>
+            <span class="photo-size">${preview.sizeKB}KB</span>
         `;
         previewContainer.appendChild(div);
     });
@@ -440,7 +399,7 @@ async function submitReview(event, placeId) {
 
     const text = document.getElementById(`review-text-${placeId}`).value.trim();
     const ratingInput = document.getElementById(`rating-${placeId}`);
-    const rating = ratingInput ? parseInt(ratingInput.value) : 0;
+    const rating = ratingInput ? parseInt(ratingInput.value, 10) : 0;
 
     if (!text && !rating) {
         alert('Please write a review or select a rating.');
@@ -449,8 +408,6 @@ async function submitReview(event, placeId) {
 
     try {
         const authorName = getUserNickname(user);
-
-        // Upsert review (one review per user per place)
         const { data: review, error } = await supabaseClient
             .from('reviews')
             .upsert({
@@ -467,35 +424,22 @@ async function submitReview(event, placeId) {
 
         if (error) throw error;
 
-        // Upload photos if any
         const fileInput = document.getElementById(`photo-input-${placeId}`);
         if (fileInput && fileInput.files && fileInput.files.length > 0) {
             await uploadReviewPhotos(review.id, user.id, fileInput.files);
         }
 
         closeReviewModal();
-
-        const cards = Array.from(document.querySelectorAll('.place-card')).map((card) => card?.dataset?.placeId).filter(Boolean);
-        const placeIdsForRefresh = cards.length > 0
-            ? cards.map((id) => ({ id }))
-            : [{ id: placeId }];
-
-        if (typeof loadPlaceReviewsForPlaces === 'function' && placeIdsForRefresh.length > 0) {
-            await loadPlaceReviewsForPlaces(placeIdsForRefresh);
-        } else if (typeof loadPlaceReviews === 'function') {
-            await loadPlaceReviews(placeId);
-        }
+        const cards = Array.from(document.querySelectorAll('.place-card')).map((card) => ({ id: card.dataset.placeId })).filter((item) => item.id);
+        await loadPlaceReviewsForPlaces(cards.length > 0 ? cards : [{ id: placeId }]);
     } catch (error) {
         console.error('Error saving review:', error);
         alert('Failed to save review: ' + error.message);
     }
 }
 
-// Resize and compress image before upload
-// Max 1200px on longest side, JPEG quality 0.7 (~70-150KB per photo)
 function resizeImage(file, maxSize = 1200, quality = 0.7) {
     return new Promise((resolve) => {
-        // If not an image, return as-is
         if (!file.type.startsWith('image/')) {
             resolve(file);
             return;
@@ -507,8 +451,6 @@ function resizeImage(file, maxSize = 1200, quality = 0.7) {
 
         img.onload = () => {
             let { width, height } = img;
-
-            // Only resize if larger than maxSize
             if (width > maxSize || height > maxSize) {
                 if (width > height) {
                     height = Math.round((height * maxSize) / width);
@@ -523,20 +465,16 @@ function resizeImage(file, maxSize = 1200, quality = 0.7) {
             canvas.height = height;
             ctx.drawImage(img, 0, 0, width, height);
 
-            canvas.toBlob(
-                (blob) => {
-                    if (blob) {
-                        resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
-                            type: 'image/jpeg',
-                            lastModified: Date.now()
-                        }));
-                    } else {
-                        resolve(file);
-                    }
-                },
-                'image/jpeg',
-                quality
-            );
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), {
+                        type: 'image/jpeg',
+                        lastModified: Date.now()
+                    }));
+                } else {
+                    resolve(file);
+                }
+            }, 'image/jpeg', quality);
         };
 
         img.onerror = () => resolve(file);
@@ -546,7 +484,6 @@ function resizeImage(file, maxSize = 1200, quality = 0.7) {
 
 async function uploadReviewPhotos(reviewId, userId, files) {
     for (const file of files) {
-        // Resize before upload to save storage
         const resized = await resizeImage(file);
         const fileName = `${userId}/${reviewId}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
 
@@ -588,7 +525,8 @@ async function deleteReviewPhoto(photoId, placeId) {
             .eq('id', photoId);
 
         if (error) throw error;
-        await loadPlaceReviews(placeId);
+        const cards = Array.from(document.querySelectorAll('.place-card')).map((card) => ({ id: card.dataset.placeId })).filter((item) => item.id);
+        await loadPlaceReviewsForPlaces(cards.length > 0 ? cards : [{ id: placeId }]);
     } catch (error) {
         console.error('Error deleting photo:', error);
         alert('Failed to delete photo.');
@@ -603,4 +541,3 @@ function openPhotoViewer(url) {
     viewer.innerHTML = `<img src="${escapeHtmlReview(url)}" style="max-width:90vw;max-height:90vh;border-radius:8px;object-fit:contain;">`;
     document.body.appendChild(viewer);
 }
-
