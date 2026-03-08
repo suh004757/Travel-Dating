@@ -122,3 +122,18 @@ acceptance_criteria:
 - Empty state still renders cleanly
 requires_human_if:
 - Fix requires new aggregate API endpoints
+
+## T-009
+status: done
+risk_level: low
+goal: Make the home archive intentionally more compact on mobile instead of forcing the desktop card composition onto iPhone-sized screens.
+files: index.html
+constraints:
+- Keep desktop behavior intact
+- Do not change backend queries or data contracts
+acceptance_criteria:
+- Mobile cards expose a shorter quick summary line
+- Mobile layout reduces clutter without hiding the primary trip link
+- Desktop cards remain readable and unchanged in structure
+requires_human_if:
+- Fix requires a new backend field
