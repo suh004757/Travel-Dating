@@ -285,14 +285,16 @@ function buildReviewSection(reviews, photoMap, user, placeId) {
 
 function renderReviewCard(review, photos, isOwn, placeId, currentUserNickname) {
     const safeText = escapeHtmlReview(review.text);
-    const authorLabel = isOwn
-        ? (currentUserNickname || review.author_name || 'Me')
-        : (review.author_name || 'Member');
+    const safeAuthorLabel = escapeHtmlReview(
+        isOwn
+            ? (currentUserNickname || review.author_name || 'Me')
+            : (review.author_name || 'Member')
+    );
     const date = new Date(review.created_at).toLocaleDateString('ko-KR');
 
     let html = `<div class="review-card ${isOwn ? 'review-own' : 'review-partner'}">`;
     html += `<div class="review-card-header">`;
-    html += `<span class="review-author">${authorLabel}</span>`;
+    html += `<span class="review-author">${safeAuthorLabel}</span>`;
     html += renderStars(review.rating || 0);
     html += `<span class="review-date">${date}</span>`;
     html += `</div>`;

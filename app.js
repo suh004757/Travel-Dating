@@ -17,6 +17,21 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function sanitizeExternalUrl(value) {
+    if (!value) return '';
+
+    try {
+        const url = new URL(String(value), window.location.origin);
+        const allowedProtocols = new Set(['http:', 'https:']);
+        if (!allowedProtocols.has(url.protocol)) {
+            return '';
+        }
+        return url.href;
+    } catch {
+        return '';
+    }
+}
+
 // Initialize Supabase
 const { createClient } = supabase;
 supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
@@ -329,7 +344,7 @@ function createPlaceCard(place) {
     const safeCategory = escapeHtml(place.category);
     const safeArea = escapeHtml(place.area);
     const safeDescription = escapeHtml(place.description);
-    const safeLink = escapeHtml(place.link);
+    const safeLink = sanitizeExternalUrl(place.link);
 
     card.innerHTML = `
         <div class="place-card-header">
