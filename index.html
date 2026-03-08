@@ -446,6 +446,7 @@
         const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
         const utils = window.DateScapeUtils || {};
         const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
+        const HOME_QUERY_TIMEOUT_MS = 10000;
 
         async function checkAuth() {
             const { data: { user } } = await supabaseClient.auth.getUser();
@@ -494,14 +495,43 @@
             return `${stats.placeCount - stats.reviewedPlaceCount} place${stats.placeCount - stats.reviewedPlaceCount > 1 ? 's are' : ' is'} still waiting for a review.`;
         }
 
+        function withTimeout(promise, label) {
+            return Promise.race([
+                promise,
+                new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error(`${label} timed out.`)), HOME_QUERY_TIMEOUT_MS);
+                })
+            ]);
+        }
+
+        function createBaseTripStats() {
+            return {
+                placeCount: 0,
+                reviewCount: 0,
+                reviewedPlaceCount: 0,
+                averageRating: null,
+                lastActivity: null
+            };
+        }
+
+        function renderTripCards(entries) {
+            const container = document.getElementById('dateList');
+            if (!container) return;
+            container.innerHTML = '';
+            entries.forEach((entry) => container.appendChild(createTripCard(entry.trip, entry.stats)));
+        }
+
         async function loadTrips() {
             const container = document.getElementById('dateList');
 
             try {
-                const { data: trips, error } = await supabaseClient
-                    .from('trips')
-                    .select('*')
-                    .order('start_date', { ascending: false });
+                const { data: trips, error } = await withTimeout(
+                    supabaseClient
+                        .from('trips')
+                        .select('*')
+                        .order('start_date', { ascending: false }),
+                    'Trip list request'
+                );
 
                 if (error) throw error;
 
@@ -518,87 +548,104 @@
                     return;
                 }
 
-                const tripIds = trips.map((trip) => trip.id);
-                const { data: places, error: placesError } = await supabaseClient
-                    .from('places')
-                    .select('id, trip_id')
-                    .in('trip_id', tripIds);
+                const baseEntries = trips.map((trip) => ({
+                    trip,
+                    stats: createBaseTripStats()
+                }));
+                renderFeaturedTrip(null);
+                renderTripCards(baseEntries);
 
-                if (placesError) throw placesError;
+                try {
+                    const tripIds = trips.map((trip) => trip.id);
+                    const { data: places, error: placesError } = await withTimeout(
+                        supabaseClient
+                            .from('places')
+                            .select('id, trip_id')
+                            .in('trip_id', tripIds),
+                        'Place stats request'
+                    );
 
-                const placesByTrip = Object.create(null);
-                const placeIdToTripId = Object.create(null);
-                (places || []).forEach((place) => {
-                    if (!placesByTrip[place.trip_id]) placesByTrip[place.trip_id] = [];
-                    placesByTrip[place.trip_id].push(place.id);
-                    placeIdToTripId[place.id] = place.trip_id;
-                });
+                    if (placesError) throw placesError;
 
-                const placeIds = (places || []).map((place) => place.id);
-                let reviews = [];
-                if (placeIds.length > 0) {
-                    const { data: reviewData, error: reviewError } = await supabaseClient
-                        .from('reviews')
-                        .select('place_id, rating, created_at, updated_at')
-                        .in('place_id', placeIds);
+                    const placesByTrip = Object.create(null);
+                    const placeIdToTripId = Object.create(null);
+                    (places || []).forEach((place) => {
+                        if (!placesByTrip[place.trip_id]) placesByTrip[place.trip_id] = [];
+                        placesByTrip[place.trip_id].push(place.id);
+                        placeIdToTripId[place.id] = place.trip_id;
+                    });
 
-                    if (reviewError) throw reviewError;
-                    reviews = reviewData || [];
+                    const placeIds = (places || []).map((place) => place.id);
+                    let reviews = [];
+                    if (placeIds.length > 0) {
+                        const { data: reviewData, error: reviewError } = await withTimeout(
+                            supabaseClient
+                                .from('reviews')
+                                .select('place_id, rating, created_at, updated_at')
+                                .in('place_id', placeIds),
+                            'Review stats request'
+                        );
+
+                        if (reviewError) throw reviewError;
+                        reviews = reviewData || [];
+                    }
+
+                    const statsByTrip = Object.fromEntries(trips.map((trip) => [trip.id, {
+                        placeCount: (placesByTrip[trip.id] || []).length,
+                        reviewCount: 0,
+                        reviewedPlaceIds: new Set(),
+                        ratings: [],
+                        lastActivity: null
+                    }]));
+
+                    reviews.forEach((review) => {
+                        const tripId = placeIdToTripId[review.place_id];
+                        const stats = statsByTrip[tripId];
+                        if (!stats) return;
+                        stats.reviewCount += 1;
+                        stats.reviewedPlaceIds.add(review.place_id);
+                        if (Number(review.rating) > 0) {
+                            stats.ratings.push(Number(review.rating));
+                        }
+                        const activityAt = review.updated_at || review.created_at;
+                        if (activityAt) {
+                            const activityDate = new Date(activityAt);
+                            if (!stats.lastActivity || activityDate > stats.lastActivity) {
+                                stats.lastActivity = activityDate;
+                            }
+                        }
+                    });
+
+                    const enrichedTrips = trips.map((trip) => {
+                        const stats = statsByTrip[trip.id];
+                        const avgRating = stats.ratings.length > 0
+                            ? stats.ratings.reduce((sum, rating) => sum + rating, 0) / stats.ratings.length
+                            : null;
+                        return {
+                            trip,
+                            stats: {
+                                placeCount: stats.placeCount,
+                                reviewCount: stats.reviewCount,
+                                reviewedPlaceCount: stats.reviewedPlaceIds.size,
+                                averageRating: avgRating,
+                                lastActivity: stats.lastActivity
+                            }
+                        };
+                    });
+
+                    const featured = [...enrichedTrips]
+                        .filter((entry) => entry.stats.reviewCount > 0)
+                        .sort((a, b) => {
+                            const timeA = a.stats.lastActivity ? a.stats.lastActivity.getTime() : 0;
+                            const timeB = b.stats.lastActivity ? b.stats.lastActivity.getTime() : 0;
+                            return timeB - timeA;
+                        })[0];
+
+                    renderFeaturedTrip(featured);
+                    renderTripCards(enrichedTrips);
+                } catch (statsError) {
+                    console.error('Non-blocking trip stats load error:', statsError);
                 }
-
-                const statsByTrip = Object.fromEntries(trips.map((trip) => [trip.id, {
-                    placeCount: (placesByTrip[trip.id] || []).length,
-                    reviewCount: 0,
-                    reviewedPlaceIds: new Set(),
-                    ratings: [],
-                    lastActivity: null
-                }]));
-
-                reviews.forEach((review) => {
-                    const tripId = placeIdToTripId[review.place_id];
-                    const stats = statsByTrip[tripId];
-                    if (!stats) return;
-                    stats.reviewCount += 1;
-                    stats.reviewedPlaceIds.add(review.place_id);
-                    if (Number(review.rating) > 0) {
-                        stats.ratings.push(Number(review.rating));
-                    }
-                    const activityAt = review.updated_at || review.created_at;
-                    if (activityAt) {
-                        const activityDate = new Date(activityAt);
-                        if (!stats.lastActivity || activityDate > stats.lastActivity) {
-                            stats.lastActivity = activityDate;
-                        }
-                    }
-                });
-
-                const enrichedTrips = trips.map((trip) => {
-                    const stats = statsByTrip[trip.id];
-                    const avgRating = stats.ratings.length > 0
-                        ? stats.ratings.reduce((sum, rating) => sum + rating, 0) / stats.ratings.length
-                        : null;
-                    return {
-                        trip,
-                        stats: {
-                            placeCount: stats.placeCount,
-                            reviewCount: stats.reviewCount,
-                            reviewedPlaceCount: stats.reviewedPlaceIds.size,
-                            averageRating: avgRating,
-                            lastActivity: stats.lastActivity
-                        }
-                    };
-                });
-
-                const featured = [...enrichedTrips]
-                    .filter((entry) => entry.stats.reviewCount > 0)
-                    .sort((a, b) => {
-                        const timeA = a.stats.lastActivity ? a.stats.lastActivity.getTime() : 0;
-                        const timeB = b.stats.lastActivity ? b.stats.lastActivity.getTime() : 0;
-                        return timeB - timeA;
-                    })[0];
-
-                renderFeaturedTrip(featured);
-                enrichedTrips.forEach((entry) => container.appendChild(createTripCard(entry.trip, entry.stats)));
             } catch (error) {
                 console.error('Error loading trips:', error);
                 container.innerHTML = `
