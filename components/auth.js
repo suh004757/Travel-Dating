@@ -1,7 +1,7 @@
 ﻿// Authentication Component
 // Handles OAuth login/logout with Supabase Auth
 
-function escapeHtml(text) {
+function authEscapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -10,7 +10,13 @@ function escapeHtml(text) {
 
 let currentUser = null;
 
+function getSupabaseClient() {
+    if (window.supabaseClient) return window.supabaseClient;
+    throw new Error('Supabase client is not initialized.');
+}
+
 async function initAuth() {
+    const supabaseClient = getSupabaseClient();
     const { data: { session } } = await supabaseClient.auth.getSession();
     currentUser = session?.user || null;
 
@@ -42,7 +48,7 @@ function renderAuthUI() {
     if (currentUser) {
         container.innerHTML = `
             <div style="position: fixed; top: 20px; right: 20px; z-index: 1000; background: white; padding: 10px 15px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 0.85rem; color: #666;">${escapeHtml(currentUser.email)}</span>
+                <span style="font-size: 0.85rem; color: #666;">${authEscapeHtml(currentUser.email)}</span>
                 <button onclick="logout()" style="background: #ff6b9d; color: white; border: none; padding: 6px 12px; border-radius: 15px; cursor: pointer; font-size: 0.85rem;">Log out</button>
             </div>
         `;
@@ -58,6 +64,7 @@ function renderAuthUI() {
 
 async function loginWithKakao() {
     try {
+        const supabaseClient = getSupabaseClient();
         const { error } = await supabaseClient.auth.signInWithOAuth({
             provider: 'kakao',
             options: {
@@ -113,7 +120,7 @@ function showWelcomeModal(user) {
         <div style="background: white; padding: 50px 40px; border-radius: 20px; max-width: 500px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; animation: slideUp 0.4s ease;">
             <h2 style="margin: 0 0 15px 0; color: #ff6b9d; font-size: 2rem;">Welcome!</h2>
             <p style="color: #666; font-size: 1.1rem; margin-bottom: 10px; line-height: 1.6;">
-                <strong style="color: #333;">${escapeHtml(userName)}</strong>, welcome to DateScape.
+                <strong style="color: #333;">${authEscapeHtml(userName)}</strong>, welcome to DateScape.
             </p>
             <p style="color: #999; font-size: 0.95rem; margin-bottom: 30px; line-height: 1.6;">
                 You can now create your own plans and manage shared notes and tasks.
@@ -138,6 +145,7 @@ function isAuthenticated() {
 }
 
 async function logout() {
+    const supabaseClient = getSupabaseClient();
     await supabaseClient.auth.signOut();
     currentUser = null;
     renderAuthUI();

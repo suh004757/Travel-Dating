@@ -440,12 +440,14 @@
 
     <script src="config.js"></script>
     <script src="components/utils.js"></script>
+    <script>
+        window.supabaseClient = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+    </script>
     <script src="components/auth.js"></script>
     <script>
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+        const supabaseClient = window.supabaseClient;
         const utils = window.DateScapeUtils || {};
-        const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
+        const safeEscapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
         const HOME_QUERY_TIMEOUT_MS = 10000;
 
         async function checkAuth() {
@@ -651,7 +653,7 @@
                 container.innerHTML = `
                     <div style="text-align:center;padding:40px;color:#dc3545;">
                         Failed to load data.<br>
-                        <small>${escapeHtml(error.message)}</small>
+                        <small>${safeEscapeHtml(error.message)}</small>
                     </div>
                 `;
             }
@@ -699,14 +701,14 @@
             const updatedLabel = stats.lastActivity ? formatDate(stats.lastActivity) : 'No review yet';
 
             card.innerHTML = `
-                <div class="card-emoji">${escapeHtml(trip.emoji || 'D')}</div>
+                <div class="card-emoji">${safeEscapeHtml(trip.emoji || 'D')}</div>
                 <div class="card-body">
                     <div class="card-topline">
                         <div class="card-date-range">${dateRange}</div>
                         <span class="${status.className}">${status.label}</span>
                     </div>
-                    <div class="card-title">${escapeHtml(trip.title || '')}</div>
-                    <div class="card-subtitle">${escapeHtml(trip.subtitle || 'A shared trip memory waiting to be filled in.')}</div>
+                    <div class="card-title">${safeEscapeHtml(trip.title || '')}</div>
+                    <div class="card-subtitle">${safeEscapeHtml(trip.subtitle || 'A shared trip memory waiting to be filled in.')}</div>
                     <div class="card-meta">
                         <span class="card-meta-chip">${stats.placeCount} places</span>
                         <span class="card-meta-chip">${stats.reviewCount} reviews</span>

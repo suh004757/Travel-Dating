@@ -26,7 +26,8 @@ const formatDate = utils.formatDate || ((value, locale = 'ko-KR', options) => {
 });
 
 const { createClient } = supabase;
-supabaseClient = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+window.supabaseClient = window.supabaseClient || createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+supabaseClient = window.supabaseClient;
 
 async function init() {
     const urlParams = new URLSearchParams(window.location.search);

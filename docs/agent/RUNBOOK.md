@@ -30,6 +30,9 @@ Every loop prompt should include:
 - Relevant file paths
 - Required checks from the review script and checklists
 
+When the issue is browser-only, also require evidence from `docs/agent/CHECKLISTS/browser-debug.md`.
+Treat the first blocking console error or failed network request as the primary debugging input.
+
 ## Output Contract
 Each loop should leave behind:
 - Code or docs changes if safe
