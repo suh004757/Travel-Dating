@@ -94,3 +94,12 @@ Record one entry per loop or bootstrap action.
 - checks:
   - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files index.html`
 - residual_risk: all five loops passed static review gates, but browser-level Supabase flows and mobile tap interactions still need a live manual pass before treating this as release-ready.
+
+## T-009 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html)
+- finding_mobile: the home archive still pushed most of the desktop card composition onto narrow screens, which kept the information accurate but visually dense on iPhone-sized layouts.
+- fix_mobile: added a mobile-only quick summary line in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L563) and switched the mobile card layout in [index.html](/d:/Joon/github/Dating/Travel-Dating/index.html#L305) to a tighter two-column presentation that hides the heavier desktop meta stack while preserving the primary trip link and status.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files index.html`
+- residual_risk: this loop passed static checks, but iPhone Safari rendering still has not been verified in a live browser session.
