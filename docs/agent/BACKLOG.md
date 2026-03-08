@@ -137,3 +137,18 @@ acceptance_criteria:
 - Desktop cards remain readable and unchanged in structure
 requires_human_if:
 - Fix requires a new backend field
+
+## T-010
+status: done
+risk_level: low
+goal: Align the detail highlight criteria with the section intent so very low-rated reviews do not surface as revisit-worthy highlights.
+files: app.js
+constraints:
+- Keep the existing highlight section structure
+- Use current review stats only
+acceptance_criteria:
+- Low-rated places are not selected for the positive rating highlight
+- Photo and latest reflection highlights still render
+- Empty and sparse review states still render cleanly
+requires_human_if:
+- Fix requires new sentiment fields

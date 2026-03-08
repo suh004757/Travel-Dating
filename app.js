@@ -16,6 +16,7 @@ let currentReviewSnapshot = {
 };
 let supabaseClient;
 const SUMMARY_SEPARATOR = ' | ';
+const MIN_POSITIVE_HIGHLIGHT_RATING = 4;
 
 const utils = window.DateScapeUtils || {};
 const escapeHtml = utils.escapeHtml || ((value) => String(value ?? ''));
@@ -624,7 +625,7 @@ function renderHighlights(places = [], placeStats = {}) {
     const candidates = [];
 
     const highestRated = Object.entries(placeStats)
-        .filter(([, stats]) => Number(stats.averageRating) > 0)
+        .filter(([, stats]) => Number(stats.averageRating) >= MIN_POSITIVE_HIGHLIGHT_RATING)
         .sort((a, b) => Number(b[1].averageRating) - Number(a[1].averageRating))[0];
     if (highestRated) {
         candidates.push({ type: 'Top rated', placeId: highestRated[0], stats: highestRated[1] });

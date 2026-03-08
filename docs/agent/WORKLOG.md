@@ -103,3 +103,11 @@ Record one entry per loop or bootstrap action.
 - checks:
   - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files index.html`
 - residual_risk: this loop passed static checks, but iPhone Safari rendering still has not been verified in a live browser session.
+
+## T-010 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js)
+- finding_detail: the `Moments worth revisiting` section could still label a place as `Top rated` even when its rating was very low, because the previous selection rule accepted any positive average rating.
+- fix_detail: tightened the positive highlight threshold in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L18) and [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L626) so only genuinely strong ratings qualify for the positive rating highlight, while photo and latest reflection highlights still render normally.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js`
