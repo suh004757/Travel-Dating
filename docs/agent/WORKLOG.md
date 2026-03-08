@@ -111,3 +111,11 @@ Record one entry per loop or bootstrap action.
 - fix_detail: tightened the positive highlight threshold in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L18) and [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L626) so only genuinely strong ratings qualify for the positive rating highlight, while photo and latest reflection highlights still render normally.
 - checks:
   - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js`
+
+## T-011 - 2026-03-08
+- loop_status: done
+- reviewed_scope: [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html), [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js)
+- finding_detail: after tightening the rating threshold, the highlight section copy still sounded more positive than the actual mixed-purpose cards in the section.
+- fix_detail: changed the section heading in [view.html](/d:/Joon/github/Dating/Travel-Dating/view.html#L79) to `Memory snapshots`, adjusted the empty state copy, and renamed the highlight labels in [app.js](/d:/Joon/github/Dating/Travel-Dating/app.js#L631) to more neutral terms such as `Strong rating`, `Photo snapshot`, and `Recent reflection`.
+- checks:
+  - `powershell -NoProfile -ExecutionPolicy Bypass -File scripts\agent-review.ps1 -Files app.js,view.html`

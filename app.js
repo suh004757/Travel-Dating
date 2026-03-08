@@ -440,7 +440,7 @@ function decoratePlaceCards() {
                 previewEl.innerHTML = `
                     <img src="${escapeHtml(stats.previewPhotoUrl)}" alt="${escapeHtml(place.name)} memory preview" loading="lazy">
                     <div class="place-memory-preview-copy">
-                        <span class="place-memory-preview-label">Photo memory</span>
+                        <span class="place-memory-preview-label">Photo snapshot</span>
                         <strong>${photoCount} photo${photoCount > 1 ? 's' : ''} captured here</strong>
                     </div>
                 `;
@@ -628,21 +628,21 @@ function renderHighlights(places = [], placeStats = {}) {
         .filter(([, stats]) => Number(stats.averageRating) >= MIN_POSITIVE_HIGHLIGHT_RATING)
         .sort((a, b) => Number(b[1].averageRating) - Number(a[1].averageRating))[0];
     if (highestRated) {
-        candidates.push({ type: 'Top rated', placeId: highestRated[0], stats: highestRated[1] });
+        candidates.push({ type: 'Strong rating', placeId: highestRated[0], stats: highestRated[1] });
     }
 
     const mostPhotos = Object.entries(placeStats)
         .filter(([, stats]) => Number(stats.photoCount) > 0)
         .sort((a, b) => Number(b[1].photoCount) - Number(a[1].photoCount))[0];
     if (mostPhotos) {
-        candidates.push({ type: 'Photo memory', placeId: mostPhotos[0], stats: mostPhotos[1] });
+        candidates.push({ type: 'Photo snapshot', placeId: mostPhotos[0], stats: mostPhotos[1] });
     }
 
     const latestReview = Object.entries(placeStats)
         .filter(([, stats]) => Boolean(stats.latestReviewAt))
         .sort((a, b) => new Date(b[1].latestReviewAt) - new Date(a[1].latestReviewAt))[0];
     if (latestReview) {
-        candidates.push({ type: 'Latest reflection', placeId: latestReview[0], stats: latestReview[1] });
+        candidates.push({ type: 'Recent reflection', placeId: latestReview[0], stats: latestReview[1] });
     }
 
     const uniqueHighlights = [];
@@ -655,7 +655,7 @@ function renderHighlights(places = [], placeStats = {}) {
     });
 
     if (uniqueHighlights.length === 0) {
-        container.innerHTML = '<div class="memory-highlight-empty">Highlights will appear once reviews and photos are added.</div>';
+        container.innerHTML = '<div class="memory-highlight-empty">Snapshots will appear once reviews or photos are added.</div>';
         return;
     }
 

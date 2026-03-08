@@ -152,3 +152,18 @@ acceptance_criteria:
 - Empty and sparse review states still render cleanly
 requires_human_if:
 - Fix requires new sentiment fields
+
+## T-011
+status: done
+risk_level: low
+goal: Reword the detail highlight section so the copy stays neutral and does not overstate revisit-worthiness.
+files: view.html, app.js
+constraints:
+- Keep the existing section placement and structure
+- Update copy only
+acceptance_criteria:
+- Section heading is more neutral
+- Highlight labels match the revised tone
+- Empty state copy remains understandable
+requires_human_if:
+- Fix requires product terminology changes outside this flow
