@@ -39,3 +39,9 @@ Do not mark a task `done` unless:
 - The task acceptance criteria are met
 - Required checks passed
 - Remaining risks are documented in `docs/agent/WORKLOG.md`
+
+## Commit Rule
+- Do not create a commit until the agent has done a code-review-style pass on the final diff
+- The review pass must check for bugs, regressions, state mismatches, security issues, and mobile impact when relevant
+- If the review finds unresolved issues, fix them or stop instead of committing
+- Commit messages should describe the real engineering change, not marketing language

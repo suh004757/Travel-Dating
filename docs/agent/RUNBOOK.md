@@ -48,6 +48,15 @@ Each loop should leave behind:
 
 If the task touches UI, the remaining risks must explicitly mention mobile and iPhone Safari status when that was not verified live.
 
+## Commit Workflow
+Before creating a commit:
+1. Review the final diff as a code review, prioritizing bugs, regressions, and missing checks.
+2. Run the required validation again if the final staged diff changed after the main edit pass.
+3. Confirm that known residual risks are acceptable and documented.
+4. Write a commit message that states the concrete fix or behavior change.
+
+Do not commit code that only "looks finished"; commit only after the review pass says the current diff is safe enough to land.
+
 ## Continuous Mode
 Use `scripts/agent-daemon.ps1` when you want the workspace to keep polling for the next ready task.
 
